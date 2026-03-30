@@ -3,6 +3,7 @@ import streamlit as st
 # 🌟 분리해 둔 화면 함수들을 불러옵니다!
 from page_faq import show_faq
 from page_stats import show_stats, show_yearly_stats  # 👈 show_yearly_stats 추가!
+from page_traffic import show_page
 import page_map  # 새로 만든 지도 페이지 모듈
 from sidebar import sidebar
 
@@ -22,6 +23,9 @@ elif menu == "맞춤형 자동차 통계":
 
 elif menu == "연도별 등록 추이":
     show_yearly_stats() # 👈 신규 vehicle_db_year 데이터 화면
+
+elif menu == "연도별 고속도로 통행량":  # 👈 사용자가 이 메뉴를 클릭하면
+    show_page()
     
 elif menu == "휴게소 정보":
     pass
