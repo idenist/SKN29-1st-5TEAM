@@ -7,16 +7,40 @@ from page_traffic import show_page
 import page_map  # 새로 만든 지도 페이지 모듈
 from sidebar import sidebar
 from PIL import Image 
+import pillow_avif
 
 # 페이지 기본 설정
-st.set_page_config(page_title="통합 플랫폼 대시보드", page_icon="🚥", layout="wide")
+st.set_page_config(page_title="HI-REST", page_icon="🛣️", layout="wide")
 
 # 👈 메뉴에 '연도별 등록 추이'를 추가했습니다.
 menu = sidebar()
 
 if menu == "메인 홈":
+<<<<<<< HEAD
     import base64
     import streamlit.components.v1 as components
+=======
+    st.header("👋 HI-REST에 오신 것을 환영합니다")
+    col1, col2 = st.columns(2)
+
+    # 2. 첫 번째 컬럼에 내용 추가
+    with col1:
+        my_image = Image.open('./highway.avif')
+        st.image(my_image)
+
+    # 3. 두 번째 컬럼에 내용 추가
+    with col2:
+        # 목차
+        st.markdown("""
+        <a class="toc-btn" href="#car-status">자동차 등록 현황</a>
+        <a class="toc-btn" href="#highway-status">고속도로 이용 현황</a>
+        <a class="toc-btn" href="#rest-status">휴게소 현황</a>
+        """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    st.subheader("📍 HI-REST란?")
+>>>>>>> 97fb9090a3a2418d5af38df855c526af30ee9bc1
     st.markdown("""
     <style>
     /* 메인 본문 폭/여백 제거 */

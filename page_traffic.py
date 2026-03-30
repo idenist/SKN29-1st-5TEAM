@@ -61,15 +61,56 @@ def show_page():
         filtered_df = df[df['vehicle_class'].isin(selected_classes)]
 
         if not filtered_df.empty:
+            # === 여기서부터 디자인 수정됨 ===
             fig = px.line(
                 filtered_df,
                 x='traffic_year',
                 y='traffic_volume',
                 color='vehicle_class',
                 markers=True,
-                labels={'traffic_year': '연도', 'traffic_volume': '교통량(단위: 천)', 'vehicle_class': '차종'}
+                line_shape='spline', # 딱딱한 선 대신 부드러운 곡선 적용
+                labels={'traffic_year': '연도', 'traffic_volume': '교통량(단위: 천)', 'vehicle_class': '차종'},
+                color_discrete_sequence=px.colors.qualitative.Set1 # 좀 더 선명한 색상 팔레트 적용
             )
-            fig.update_xaxes(dtick=1) 
+            
+            # 선 굵기 및 마커 스타일 세부 조정
+            fig.update_traces(
+                line=dict(width=3.5), 
+                marker=dict(size=8, line=dict(width=2, color='white')), 
+                hovertemplate="%{y:,.0f}천 대<extra></extra>" # 숫자에 천 단위 콤마 추가
+            )
+
+            # 레이아웃 전반의 디자인 (배경, 그리드, 범례 위치)
+            fig.update_layout(
+                template='plotly_white', # 깔끔한 흰색 배경
+                hovermode='x unified',   # 마우스를 올리면 해당 연도의 모든 차종 데이터를 툴팁 하나에 보여줌
+                legend=dict(
+                    orientation="h",     # 범례를 가로로 배치
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
+                    title=None           # 범례의 '차종' 타이틀 생략 (공간 절약)
+                ),
+                margin=dict(l=10, r=10, t=50, b=10) # 불필요한 여백 최소화
+            )
+            
+            # x, y축 디자인 깔끔하게 정리
+            fig.update_xaxes(
+                dtick=1, 
+                showgrid=False, # x축 세로선 숨기기 (더 깔끔함)
+                title_font=dict(size=14, color='gray'),
+                tickfont=dict(size=12, color='dimgray')
+            )
+            fig.update_yaxes(
+                showgrid=True, 
+                gridcolor='#F0F0F0', # 연한 회색 가로선
+                zeroline=False,
+                title_font=dict(size=14, color='gray'),
+                tickfont=dict(size=12, color='dimgray')
+            )
+            # === 여기까지 디자인 수정됨 ===
+            
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("차종을 하나 이상 선택해주세요.")
