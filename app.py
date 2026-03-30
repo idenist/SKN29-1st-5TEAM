@@ -14,63 +14,203 @@ st.set_page_config(page_title="통합 플랫폼 대시보드", page_icon="🚥",
 # 👈 메뉴에 '연도별 등록 추이'를 추가했습니다.
 menu = sidebar()
 
-st.markdown("""
-<style>
-.toc-btn,
-.toc-btn:link,
-.toc-btn:visited,
-.toc-btn:hover,
-.toc-btn:active {
-    display: block;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    margin: 0.4rem 0;
-    border-radius: 0.7rem;
-    border: 1px solid rgba(49, 51, 63, 0.2);
-    background: white;
-    color: rgb(49, 51, 63);
-    text-decoration: none !important;
-    font-weight: 600;
-    font-size: 1.05rem;
-    box-sizing: border-box;
-}
-
-.toc-btn:hover {
-    border-color: rgb(255, 75, 75);
-    color: rgb(255, 75, 75);
-    text-decoration: none !important;
-}
-</style>
-""", unsafe_allow_html=True)
-    
-# 메인 화면 로직 분기
 if menu == "메인 홈":
-    st.header("👋 HI-REST에 오신 것을 환영합니다 😍")
-    col1, col2 = st.columns(2)
-
-    # 2. 첫 번째 컬럼에 내용 추가
-    with col1:
-        my_image = Image.open('./highway.avif')
-        st.image(my_image)
-
-    # 3. 두 번째 컬럼에 내용 추가
-    with col2:
-        # 목차
-        st.markdown("""
-        <a class="toc-btn" href="#car-status">자동차 등록 현황</a>
-        <a class="toc-btn" href="#highway-status">고속도로 이용 현황</a>
-        <a class="toc-btn" href="#rest-status">휴게소 현황</a>
-        """, unsafe_allow_html=True)
-    
-    st.divider()
-    
-    st.subheader("📍 HI-REST란?")
+    import base64
+    import streamlit.components.v1 as components
     st.markdown("""
-        국가데이터처에서 제공하는 데이터에 따르면 누적 자동차등록대수는 근 10년간 꾸준히 증가해왔습니다.  
-        이는 자동차를 이용한 이동 수요가 점차 증가하고 있다는 점을 의미하고,  
-        자동차를 통한 이동 수요가 많아진다는 것은 고속도로의 이용량이 점차 늘어난다는 의미도 됩니다.  
-        
-        """)
+    <style>
+    /* 메인 본문 폭/여백 제거 */
+    .block-container {
+        max-width: 100% !important;
+        padding-top: 0rem !important;
+        padding-right: 0rem !important;
+        padding-left: 0rem !important;
+        padding-bottom: 0rem !important;
+    }
+
+    /* 상단 툴바 아래쪽 기본 여백도 줄이기 */
+    [data-testid="stAppViewContainer"] > .main {
+        padding-top: 0rem !important;
+    }
+
+    /* components iframe 바깥 여백 제거 */
+    [data-testid="stIFrame"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    def img_to_base64(path):
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+
+    img_base64 = img_to_base64("highway.png")
+
+    hero_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }}
+
+        .hero-wrap {{
+            position: relative;
+            width: 100%;
+            height: 88vh;
+            overflow: hidden;
+        }}
+
+        .hero-bg {{
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/png;base64,{img_base64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: brightness(0.78);
+        }}
+
+        .hero-overlay {{
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to right,
+                rgba(0,0,0,0.35) 0%,
+                rgba(0,0,0,0.18) 35%,
+                rgba(0,0,0,0.18) 65%,
+                rgba(0,0,0,0.35) 100%
+            );
+        }}
+
+        .hero-content {{
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            align-items: center;
+            padding: 0 5vw;
+            color: white;
+            box-sizing: border-box;
+        }}
+
+        .hero-left, .hero-center, .hero-right {{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }}
+
+        .hero-left {{
+            align-items: flex-start;
+            text-align: left;
+        }}
+
+        .hero-center {{
+            align-items: center;
+            text-align: center;
+        }}
+
+        .hero-right {{
+            align-items: flex-end;
+            text-align: right;
+        }}
+
+        .hero-line {{
+            width: 80px;
+            height: 4px;
+            background: rgba(255,255,255,0.85);
+            margin-bottom: 22px;
+            border-radius: 999px;
+        }}
+
+        .hero-title {{
+            font-size: clamp(2rem, 4vw, 4rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin: 0;
+        }}
+
+        .hero-label {{
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            opacity: 0.95;
+        }}
+
+        .hero-number {{
+            font-size: clamp(4rem, 10vw, 7.5rem);
+            font-weight: 900;
+            line-height: 1;
+            margin: 0;
+        }}
+
+        .hero-unit {{
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 10px;
+            opacity: 0.9;
+        }}
+
+        .hero-bottom-bar {{
+            position: absolute;
+            left: 50%;
+            bottom: 28px;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 8px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 999px;
+            overflow: hidden;
+            z-index: 3;
+        }}
+
+        .hero-bottom-bar-fill {{
+            width: 42%;
+            height: 100%;
+            background: #1d9bf0;
+            border-radius: 999px;
+        }}
+    </style>
+    </head>
+    <body>
+        <div class="hero-wrap">
+            <div class="hero-bg"></div>
+            <div class="hero-overlay"></div>
+
+            <div class="hero-content">
+                <div class="hero-left">
+                    <div class="hero-line"></div>
+                    <h1 class="hero-title">차량 흐름과<br>도로 이용 현황</h1>
+                </div>
+
+                <div class="hero-center">
+                    <div class="hero-label">평균속도</div>
+                    <div class="hero-number">84</div>
+                    <div class="hero-unit">km/h</div>
+                </div>
+
+                <div class="hero-right">
+                    <div class="hero-line"></div>
+                    <h1 class="hero-title">다양한 휴게소 <br>정보 제공</h1>
+                </div>
+            </div>
+
+            <div class="hero-bottom-bar">
+                <div class="hero-bottom-bar-fill"></div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    components.html(hero_html, height=800, scrolling=False)
+
 
 elif menu == "등록된 자동차 통계":
     show_stats() # 기존 carmaster_db 데이터 화면
