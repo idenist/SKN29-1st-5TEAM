@@ -1,11 +1,6 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-# ============================================
-# 1. 사이드바 (Sidebar) 사용하기
-# ============================================
-# sidebar.py
-
 def sidebar():
     st.sidebar.title("🚥 메뉴 이동")
 
@@ -17,12 +12,12 @@ def sidebar():
                 "등록된 자동차 통계", 
                 "연도별 등록 추이", 
                 "연도별 고속도로 통행량",
-                "휴게소 정보",       # 👈 데이터/리스트용
-                "휴게소 위치 지도", # 👈 지도 시각화용
+                "주요 지역 소요 시간",
+                "휴게소 위치 지도", 
                 "FAQ 게시판"
             ],
-            # 아이콘도 각각 어울리는 걸로 배치했습니다.
-            icons=['house', 'car-front', 'graph-up', 'info-circle', 'map', 'question'],
+            # 스톱워치(stopwatch) 아이콘을 추가로 배치했습니다.
+            icons=['house', 'car-front', 'graph-up', 'bar-chart', 'stopwatch', 'map', 'question'],
             menu_icon="app-indicator", default_index=0,
             styles={
                 "container": {"padding": "4!important", "background-color": "#fafafa"},
