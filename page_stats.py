@@ -8,7 +8,7 @@ from utils import load_car_data, load_yearly_car_data
 # 1. 기존: 사용자 맞춤형 통계 화면 (carmaster_db)
 # ==========================================
 def show_stats():
-    st.title("📊 최근 5개월 자동차 신규 등록 통계")
+    st.title("🚘 최근 5개월 자동차 신규 등록 통계")
     st.write("궁금한 조건을 직접 선택해서 나만의 맞춤형 통계를 확인해 보세요!")
     st.markdown("---")
 

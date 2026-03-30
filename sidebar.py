@@ -9,7 +9,7 @@ def sidebar():
 
     with st.sidebar:
         choice = option_menu(
-            "Menu", ["메인 홈", "맞춤형 자동차 통계", "연도별 등록 추이", "휴게소 정보", "FAQ 게시판"],
+            "Menu", ["메인 홈", "맞춤형 자동차 통계", "연도별 등록 추이", "고속도로 휴게소 정보", "FAQ 게시판"],
             icons=['house', 'car-front', 'graph-up', 'p-circle', 'question'],
             menu_icon="app-indicator", default_index=0,
             styles={
