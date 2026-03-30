@@ -2,126 +2,153 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from sqlalchemy import create_engine
-from sqlalchemy.engine import URL  # 👈 URL 조립 도구 추가
-import pymysql
 import os
 from dotenv import load_dotenv
 
-# --- .env 파일 로드 ---
+# --- .env 로드 및 설정 ---
 load_dotenv()
-
-# ==============================================================================
-# 환경 변수에서 DB 접속 정보 가져오기
-# .strip()을 사용하여 혹시 모를 앞뒤 공백이나 줄바꿈 문자를 제거합니다.
-# ==============================================================================
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1").strip().replace("@", "") # @ 기호 강제 제거
+DB_HOST = os.getenv("DB_HOST", "127.0.0.1").strip().replace("@", "")
 DB_PORT = os.getenv("DB_PORT", "3306").strip()
 DB_USER = os.getenv("DB_USER", "root").strip()
 DB_PWD  = os.getenv("DB_PASSWORD", "").strip()
-DB_NAME_REST = os.getenv("DB_NAME_REST", "rest_area").strip() # DB 이름
+DB_NAME_REST = os.getenv("DB_NAME_REST", "rest_area").strip()
 
 @st.cache_resource
 def get_rest_area_db_connection():
     try:
-        # 1. 환경 변수 청소 (앞뒤 공백 및 불필요한 @ 제거)
-        host = DB_HOST.strip().replace("@", "")
-        user = DB_USER.strip()
-        pwd  = DB_PWD.strip()
-        port = int(DB_PORT.strip()) # 포트는 숫자로 변환
-        db   = DB_NAME_REST.strip()
-
-        # 2. [핵심] URL 객체 사용 (f-string 방식의 @ 오류를 원천 차단)
+        from sqlalchemy.engine import URL
         connection_url = URL.create(
             drivername="mysql+pymysql",
-            username=user,
-            password=pwd,
-            host=host,
-            port=port,
-            database=db,
+            username=DB_USER,
+            password=DB_PWD,
+            host=DB_HOST,
+            port=int(DB_PORT),
+            database=DB_NAME_REST,
             query={"charset": "utf8mb4"}
         )
-        
-        # 3. 엔진 생성
-        engine = create_engine(connection_url, connect_args={'connect_timeout': 10})
-        return engine
-
+        return create_engine(connection_url)
     except Exception as e:
-        st.error(f"⚠️ 휴게소 DB 연결 실패: {e}")
+        st.error(f"⚠️ DB 연결 오류: {e}")
         return None
 
 @st.cache_data
 def load_all_rest_areas(_engine):
-    if _engine is None:
-        return pd.DataFrame()
-    
-    # 테이블 이름은 이미지에 나온 대로 'rest_areas' (복수형)를 사용합니다.
+    if _engine is None: return pd.DataFrame()
     query = "SELECT restarea_name, route_name, xValue, yValue, service_area_code FROM rest_areas"
-    
     try:
-        df = pd.read_sql_query(query, _engine)
-        return df
+        return pd.read_sql_query(query, _engine)
     except Exception as e:
-        # 테이블 이름이 틀렸을 경우를 위해 에러 메시지 상세 출력
-        st.error(f"⚠️ 데이터를 가져오는 중 오류 발생: {e}")
+        st.error(f"⚠️ 데이터 로드 오류: {e}")
         return pd.DataFrame()
 
 # ==========================================
-# 메인 화면에 그릴 함수 정의
+# 메인 서비스 함수
 # ==========================================
 def show_rest_area_map():
-    st.title("🛰️ 전국 고속도로 휴게소 노선별 지도")
-    st.markdown("DB 데이터를 실시간으로 불러오며, 왼쪽 사이드바에서 노선별로 필터링할 수 있습니다.")
-    st.markdown("---")
+    # 1. 헤더 디자인
+    st.title("📍 고속도로 휴게소 탐색기")
+    st.markdown("""
+        전국 고속도로 휴게소의 위치를 노선별로 한눈에 확인하세요. 
+        원하는 노선을 선택하면 해당 노선의 휴게소 리스트가 자동으로 업데이트됩니다.
+    """)
+    st.write("") # 공백
 
     engine = get_rest_area_db_connection()
+    if not engine: return
 
-    if engine:
-        with st.spinner('DB에서 휴게소 정보를 불러오는 중...'):
-            df = load_all_rest_areas(engine)
+    df = load_all_rest_areas(engine)
+    if df.empty:
+        st.warning("데이터가 존재하지 않습니다.")
+        return
 
-        if not df.empty:
-            # 사이드바 필터링
-            st.sidebar.header("🔍 노선 필터링")
-            all_routes = sorted(df['route_name'].unique().tolist())
-            selected_routes = st.sidebar.multiselect(
-                "조회할 노선을 선택하세요", 
-                options=all_routes, 
-                default=all_routes
+    # [중요] 데이터 타입 강제 변환 (문자열일 경우를 대비해 숫자로 변환)
+    df['yValue'] = pd.to_numeric(df['yValue'], errors='coerce')
+    df['xValue'] = pd.to_numeric(df['xValue'], errors='coerce')
+    # NaN 값(잘못된 좌표) 제거
+    df = df.dropna(subset=['yValue', 'xValue'])
+
+    # 2. 필터 섹션
+    all_routes = sorted(df['route_name'].unique().tolist())
+    
+    with st.container():
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            default_val = ['경부선'] if '경부선' in all_routes else [all_routes[0]]
+            selected_routes = st.multiselect("🗺️ 노선 선택", options=all_routes, default=default_val)
+        with col2:
+            filtered_df = df[df['route_name'].isin(selected_routes)].copy() # .copy() 추가
+            st.metric("검색된 휴게소", f"{len(filtered_df)}개")
+
+    st.markdown("---")
+
+    if not filtered_df.empty:
+        # 1. 데이터 타입 확인 및 마커 크기 설정
+        filtered_df['yValue'] = pd.to_numeric(filtered_df['yValue'], errors='coerce')
+        filtered_df['xValue'] = pd.to_numeric(filtered_df['xValue'], errors='coerce')
+        filtered_df = filtered_df.dropna(subset=['yValue', 'xValue'])
+        filtered_df['marker_size'] = 15 
+
+        # 2. 지도 시각화 (고정된 center와 zoom 사용)
+        fig = px.scatter_mapbox(
+            filtered_df,
+            lat="yValue",
+            lon="xValue",
+            hover_name="restarea_name",
+            hover_data={"route_name": True, "yValue": False, "xValue": False, "marker_size": False},
+            color="route_name",
+            # --- [수정] 다시 고정된 위치로 설정합니다 ---
+            zoom=7.0,                           # 한반도가 전체적으로 보이는 줌 레벨
+            center={"lat": 36.3, "lon": 127.8}, # 대한민국 중심 좌표
+            # ---------------------------------------
+            height=650,
+            opacity=0.8,
+            size="marker_size",
+            size_max=15
+        )
+
+        # 3. 레이아웃 설정 (bounds 관련 코드 삭제)
+        fig.update_layout(
+            mapbox_style="open-street-map",
+            margin={"r":0,"t":0,"l":0,"b":0},
+            legend=dict(
+                yanchor="top", y=0.99, xanchor="left", x=0.01,
+                bgcolor="rgba(255, 255, 255, 0.7)"
             )
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+        st.write("") 
+
+        # 4. 휴게소 상세 리스트 (UX/디자인 대폭 개선)
+        st.markdown(f"### 📋 노선별 상세 휴게소 현황")
+        st.info("선택하신 노선별로 휴게소 명단을 확인하실 수 있습니다.")
+
+        # 노선별로 섹션을 나누어 표시
+        # 선택된 노선이 많을 경우 페이지가 너무 길어지지 않게 루프를 돌며 Expander 혹은 Tabs를 활용합니다.
+        
+        if len(selected_routes) > 1:
+            # 여러 노선이 선택된 경우: Tabs를 사용하여 깔끔하게 분리 (UX 권장)
+            tabs = st.tabs([f"🛣️ {route}" for route in selected_routes])
             
-            filtered_df = df[df['route_name'].isin(selected_routes)]
-
-            if filtered_df.empty:
-                st.warning("선택한 노선에 해당하는 휴게소가 없습니다.")
-            else:
-                st.success(f"✅ 현재 **{len(selected_routes)}개 노선**, 총 **{len(filtered_df):,}개**의 휴게소를 표시 중입니다.")
-
-                # Plotly 지도 시각화
-                fig = px.scatter_mapbox(
-                    filtered_df,
-                    lat="yValue",
-                    lon="xValue",
-                    hover_name="restarea_name",
-                    hover_data={"route_name": True, "service_area_code": True, "yValue": False, "xValue": False},
-                    color="route_name",
-                    zoom=6.5,
-                    center={"lat": 36.5, "lon": 127.8},
-                    height=750,
-                    opacity=0.8
-                )
-
-                fig.update_layout(mapbox_style="open-street-map")
-                fig.update_layout(
-                    margin={"r":0,"t":0,"l":0,"b":0},
-                    legend_title_text='노선명 (클릭하여 켜기/끄기)' 
-                ) 
-
-                st.plotly_chart(fig, use_container_width=True)
-
-                with st.expander("필터링된 원본 데이터 테이블 보기"):
-                    st.dataframe(filtered_df)
-                
+            for i, route in enumerate(selected_routes):
+                with tabs[i]:
+                    route_df = filtered_df[filtered_df['route_name'] == route]
+                    st.markdown(f"**{route}**에는 총 **{len(route_df)}개**의 휴게소가 있습니다.")
+                    
+                    # 불필요한 정보 제거 후 명칭만 노출
+                    display_df = route_df[['restarea_name']].rename(columns={'restarea_name': '휴게소 명칭'})
+                    st.dataframe(display_df, use_container_width=True, hide_index=True)
+        
         else:
-            st.warning("DB 연결은 성공했으나 데이터를 가져오지 못했습니다. 테이블 이름이나 컬럼명을 확인해 주세요.")
+            # 단일 노선만 선택된 경우: 바로 리스트 노출
+            route = selected_routes[0]
+            route_df = filtered_df[filtered_df['route_name'] == route]
+            
+            with st.container():
+                st.markdown(f"#### 📍 {route} 휴게소 명단")
+                # 디자인적 요소를 위해 단순 표 대신 깔끔한 dataframe 사용
+                display_df = route_df[['restarea_name']].rename(columns={'restarea_name': '휴게소 명칭'})
+                st.dataframe(display_df, use_container_width=True, hide_index=True)
+
     else:
-        st.error("DB 접속 정보가 올바르지 않습니다. .env 파일의 DB_HOST 설정을 확인해 주세요.")
+        st.info("노선을 선택하면 지도가 표시됩니다.")
