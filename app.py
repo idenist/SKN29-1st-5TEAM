@@ -72,7 +72,7 @@ if menu == "메인 홈":
         
         """)
 
-elif menu == "맞춤형 자동차 통계":
+elif menu == "등록된 자동차 통계":
     show_stats() # 기존 carmaster_db 데이터 화면
 
 elif menu == "연도별 등록 추이":

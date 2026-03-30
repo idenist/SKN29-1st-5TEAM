@@ -1,13 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
 
-# --- .env 로드 및 설정 ---
+# 페이지 설정
+st.set_page_config(layout="wide", page_title="고속도로 휴게소 탐색기")
+
+# --- .env 로드 ---
 load_dotenv()
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1").strip().replace("@", "")
+DB_HOST = os.getenv("DB_HOST", "127.0.0.1").strip()
 DB_PORT = os.getenv("DB_PORT", "3306").strip()
 DB_USER = os.getenv("DB_USER", "root").strip()
 DB_PWD  = os.getenv("DB_PASSWORD", "").strip()
@@ -41,114 +45,191 @@ def load_all_rest_areas(_engine):
         st.error(f"⚠️ 데이터 로드 오류: {e}")
         return pd.DataFrame()
 
+def fetch_restarea_details(_engine, restarea_name):
+    gas_station_name = restarea_name.replace("휴게소", "주유소")
+    
+    # 1. 음식 정보
+    try:
+        df_food = pd.read_sql(f"SELECT foodNm, foodCost, bestfoodyn, etc FROM foodinfo WHERE restarea_name = '{restarea_name}'", _engine)
+    except: df_food = pd.DataFrame()
+    
+    # 2. 주유소 정보
+    try:
+        query_gas = f"SELECT gasoline_price, disel_price, lpg_price, lpgYn, svarAddr FROM rest_area_gas WHERE restarea_name = '{gas_station_name}'"
+        df_gas = pd.read_sql(query_gas, _engine)
+        gas_info = df_gas.iloc[0] if not df_gas.empty else None
+    except: gas_info = None
+    
+    # 3. 행사 정보
+    try:
+        query_events = f"SELECT event_name, start_time, end_time, event_detail FROM rest_area_events WHERE restarea_name = '{restarea_name}'"
+        df_events = pd.read_sql(query_events, _engine)
+    except: df_events = pd.DataFrame()
+
+    # 4. 편의 시설 정보 (추가됨)
+    try:
+        query_amenties = f"SELECT rest_eng, rest_elc, rest_plc, rest_pha, rest_nur FROM rest_area_amenties WHERE restarea_name = '{restarea_name}'"
+        df_amenties = pd.read_sql(query_amenties, _engine)
+        amenties_info = df_amenties.iloc[0] if not df_amenties.empty else None
+    except: amenties_info = None
+    
+    return df_food, gas_info, df_events, amenties_info
+
 # ==========================================
-# 메인 서비스 함수
+# 1. 팝업창 (Dialog) UI
+# ==========================================
+@st.dialog("휴게소 상세 정보", width="large")
+def show_detail_popup(_engine, restarea_name):
+    df_food, gas_info, df_events, amenties_info = fetch_restarea_details(_engine, restarea_name)
+
+    st.header(f"🏛️ {restarea_name}")
+    
+    if gas_info is not None and pd.notna(gas_info.get('svarAddr')):
+        st.markdown(f"📍 **주소: {gas_info['svarAddr']}**")
+    
+    # --- [추가] 편의 시설 정보 (심플하게 표시) ---
+    if amenties_info is not None:
+        amenty_list = []
+        if amenties_info.get('rest_eng') == 'Y': amenty_list.append("🛠️ 차량정비")
+        if amenties_info.get('rest_elc') == 'Y': amenty_list.append("⚡ 전기차충전")
+        if amenties_info.get('rest_plc') == 'Y': amenty_list.append("🌳 쉼터")
+        if amenties_info.get('rest_pha') == 'Y': amenty_list.append("💊 약국")
+        if amenties_info.get('rest_nur') == 'Y': amenty_list.append("🍼 수유실")
+        
+        if amenty_list:
+            st.markdown(f"**보유 시설:** {' | '.join(amenty_list)}")
+    
+    st.write("")
+
+    # --- 주유소 정보 ---
+    st.subheader("⛽ 주유소 및 충전소 정보")
+    if gas_info is not None:
+        g1, g2, g3 = st.columns(3)
+        gas_p = f"{int(gas_info['gasoline_price']):,}원" if pd.notna(gas_info['gasoline_price']) else "정보 없음"
+        disel_p = f"{int(gas_info['disel_price']):,}원" if pd.notna(gas_info['disel_price']) else "정보 없음"
+        g1.metric("휘발유", gas_p)
+        g2.metric("경유", disel_p)
+        if str(gas_info.get('lpgYn')) == '1':
+            lpg_p = f"{int(gas_info['lpg_price']):,}원" if pd.notna(gas_info['lpg_price']) else "가격 미정"
+            g3.metric("LPG", lpg_p)
+        else: g3.metric("LPG", "미운영")
+    else: st.write("등록된 주유소 정보가 없습니다.")
+
+    st.divider()
+
+    # --- 행사 정보 ---
+    st.subheader("🎉 진행 중인 행사")
+    if not df_events.empty:
+        for _, event in df_events.iterrows():
+            with st.expander(f"📌 {event['event_name']} ({event['start_time']} ~ {event['end_time']})", expanded=True):
+                # [정제] 취소선 깨짐 방지를 위해 ~~만 정제
+                clean_detail = str(event['event_detail']).replace('~~', '~')
+                st.write(clean_detail)
+    else:
+        st.info("현재 진행 중인 행사가 없습니다.")
+
+    st.divider()
+
+    # --- 음식 정보 ---
+    st.subheader("🍴 대표 메뉴 및 식당가")
+    if not df_food.empty:
+        df_food.fillna({'foodNm': '메뉴명 없음', 'foodCost': 0, 'etc': '', 'bestfoodyn': 'N'}, inplace=True)
+        best_menus = df_food[df_food['bestfoodyn'] == 'Y']['foodNm'].tolist()
+        if best_menus:
+            st.markdown(f"⭐ **베스트 메뉴**: {', '.join([f'**{m}**' for m in best_menus])}")
+            st.write("")
+        
+        st.dataframe(
+            df_food[['foodNm', 'foodCost', 'etc']].rename(columns={'foodNm': '메뉴명', 'foodCost': '가격', 'etc': '설명'}),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "가격": st.column_config.NumberColumn(format="%d원"),
+                "설명": st.column_config.TextColumn("설명", width="large")
+            }
+        )
+    else: st.write("식당가 정보가 등록되지 않았습니다.")
+
+    st.write("")
+    if st.button("닫기", use_container_width=True, key="btn_close_popup"):
+        st.session_state.last_opened = restarea_name 
+        st.rerun()
+
+# ==========================================
+# 2. 메인 화면
 # ==========================================
 def show_rest_area_map():
-    # 1. 헤더 디자인
     st.title("📍 고속도로 휴게소 탐색기")
-    st.markdown("""
-        전국 고속도로 휴게소의 위치를 노선별로 한눈에 확인하세요. 
-        원하는 노선을 선택하면 해당 노선의 휴게소 리스트가 자동으로 업데이트됩니다.
-    """)
-    st.write("") # 공백
-
     engine = get_rest_area_db_connection()
     if not engine: return
 
-    df = load_all_rest_areas(engine)
-    if df.empty:
-        st.warning("데이터가 존재하지 않습니다.")
-        return
+    if "last_opened" not in st.session_state:
+        st.session_state.last_opened = None
 
-    # [중요] 데이터 타입 강제 변환 (문자열일 경우를 대비해 숫자로 변환)
-    df['yValue'] = pd.to_numeric(df['yValue'], errors='coerce')
-    df['xValue'] = pd.to_numeric(df['xValue'], errors='coerce')
-    # NaN 값(잘못된 좌표) 제거
-    df = df.dropna(subset=['yValue', 'xValue'])
+    df_all = load_all_rest_areas(engine)
+    if df_all.empty: return
 
-    # 2. 필터 섹션
-    all_routes = sorted(df['route_name'].unique().tolist())
-    
-    with st.container():
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            default_val = ['경부선'] if '경부선' in all_routes else [all_routes[0]]
-            selected_routes = st.multiselect("🗺️ 노선 선택", options=all_routes, default=default_val)
-        with col2:
-            filtered_df = df[df['route_name'].isin(selected_routes)].copy() # .copy() 추가
-            st.metric("검색된 휴게소", f"{len(filtered_df)}개")
+    df_all['yValue'] = pd.to_numeric(df_all['yValue'], errors='coerce')
+    df_all['xValue'] = pd.to_numeric(df_all['xValue'], errors='coerce')
+    df_all = df_all.dropna(subset=['yValue', 'xValue'])
 
-    st.markdown("---")
+    all_routes = sorted(df_all['route_name'].unique().tolist())
+    selected_routes = st.multiselect("🗺️ 노선 선택", options=all_routes, default=['경부선'] if '경부선' in all_routes else [all_routes[0]])
+    filtered_df = df_all[df_all['route_name'].isin(selected_routes)].copy()
 
     if not filtered_df.empty:
-        # 1. 데이터 타입 확인 및 마커 크기 설정
-        filtered_df['yValue'] = pd.to_numeric(filtered_df['yValue'], errors='coerce')
-        filtered_df['xValue'] = pd.to_numeric(filtered_df['xValue'], errors='coerce')
-        filtered_df = filtered_df.dropna(subset=['yValue', 'xValue'])
-        filtered_df['marker_size'] = 15 
+        fig = go.Figure()
+        routes = filtered_df['route_name'].unique()
+        for i, route in enumerate(routes):
+            route_data = filtered_df[filtered_df['route_name'] == route]
+            fig.add_trace(go.Scattermapbox(
+                lat=route_data['yValue'], lon=route_data['xValue'],
+                mode='markers',
+                marker=go.scattermapbox.Marker(
+                    size=18, 
+                    color='firebrick', 
+                    symbol='circle', 
+                    opacity=0.9,
+                    allowoverlap=True
+                ),
+                hovertext=route_data['restarea_name'],
+                hovertemplate="<b>%{hovertext}</b><br>노선: " + route + "<extra></extra>",
+                name=route
+            ))
 
-        # 2. 지도 시각화 (고정된 center와 zoom 사용)
-        fig = px.scatter_mapbox(
-            filtered_df,
-            lat="yValue",
-            lon="xValue",
-            hover_name="restarea_name",
-            hover_data={"route_name": True, "yValue": False, "xValue": False, "marker_size": False},
-            color="route_name",
-            # --- [수정] 다시 고정된 위치로 설정합니다 ---
-            zoom=7.0,                           # 한반도가 전체적으로 보이는 줌 레벨
-            center={"lat": 36.3, "lon": 127.8}, # 대한민국 중심 좌표
-            # ---------------------------------------
-            height=650,
-            opacity=0.8,
-            size="marker_size",
-            size_max=15
-        )
-
-        # 3. 레이아웃 설정 (bounds 관련 코드 삭제)
         fig.update_layout(
-            mapbox_style="open-street-map",
-            margin={"r":0,"t":0,"l":0,"b":0},
-            legend=dict(
-                yanchor="top", y=0.99, xanchor="left", x=0.01,
-                bgcolor="rgba(255, 255, 255, 0.7)"
-            )
+            mapbox=dict(style="open-street-map", zoom=7.0, center={"lat": 36.3, "lon": 127.8}),
+            margin={"r":0,"t":0,"l":0,"b":0}, height=550, uirevision='constant',
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(255, 255, 255, 0.7)")
         )
 
-        st.plotly_chart(fig, use_container_width=True)
-        st.write("") 
+        map_event = st.plotly_chart(fig, use_container_width=True, on_select="rerun", key="rest_map")
 
-        # 4. 휴게소 상세 리스트 (UX/디자인 대폭 개선)
-        st.markdown(f"### 📋 노선별 상세 휴게소 현황")
-        st.info("선택하신 노선별로 휴게소 명단을 확인하실 수 있습니다.")
-
-        # 노선별로 섹션을 나누어 표시
-        # 선택된 노선이 많을 경우 페이지가 너무 길어지지 않게 루프를 돌며 Expander 혹은 Tabs를 활용합니다.
-        
-        if len(selected_routes) > 1:
-            # 여러 노선이 선택된 경우: Tabs를 사용하여 깔끔하게 분리 (UX 권장)
-            tabs = st.tabs([f"🛣️ {route}" for route in selected_routes])
-            
-            for i, route in enumerate(selected_routes):
-                with tabs[i]:
-                    route_df = filtered_df[filtered_df['route_name'] == route]
-                    st.markdown(f"**{route}**에는 총 **{len(route_df)}개**의 휴게소가 있습니다.")
-                    
-                    # 불필요한 정보 제거 후 명칭만 노출
-                    display_df = route_df[['restarea_name']].rename(columns={'restarea_name': '휴게소 명칭'})
-                    st.dataframe(display_df, use_container_width=True, hide_index=True)
-        
+        if "selection" in map_event and map_event.selection and map_event.selection.points:
+            clicked_name = map_event.selection.points[0].get('hovertext')
+            if clicked_name and clicked_name != st.session_state.last_opened:
+                show_detail_popup(engine, clicked_name)
+            elif clicked_name is None:
+                st.session_state.last_opened = None 
         else:
-            # 단일 노선만 선택된 경우: 바로 리스트 노출
-            route = selected_routes[0]
-            route_df = filtered_df[filtered_df['route_name'] == route]
-            
-            with st.container():
-                st.markdown(f"#### 📍 {route} 휴게소 명단")
-                # 디자인적 요소를 위해 단순 표 대신 깔끔한 dataframe 사용
-                display_df = route_df[['restarea_name']].rename(columns={'restarea_name': '휴게소 명칭'})
-                st.dataframe(display_df, use_container_width=True, hide_index=True)
+            st.session_state.last_opened = None
 
-    else:
-        st.info("노선을 선택하면 지도가 표시됩니다.")
+    st.markdown("---")
+    
+    st.subheader("📋 휴게소 명단")
+    search_keyword = st.text_input("🔍 휴게소 검색", placeholder="예: 건천")
+
+    if not filtered_df.empty:
+        list_df = filtered_df[filtered_df['restarea_name'].str.contains(search_keyword, case=False, na=False)] if search_keyword else filtered_df
+
+        if list_df.empty:
+            st.warning("검색 결과가 없습니다.")
+        else:
+            with st.container(height=350):
+                for name in list_df['restarea_name']:
+                    if st.button(name, use_container_width=True, key=f"btn_list_{name}"):
+                        st.session_state.last_opened = None 
+                        show_detail_popup(engine, name)
+
+if __name__ == '__main__':
+    show_rest_area_map()

@@ -5,6 +5,7 @@ import plotly.express as px
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 # 환경변수 및 DB 엔진 설정은 함수 밖에 두어 재사용합니다.
 load_dotenv()
@@ -17,8 +18,17 @@ def get_db_engine():
     db_password = os.getenv("DB_PASSWORD", "")
     db_name = os.getenv("DB_NAME_TRAFFIC", "traffic")
     
-    engine_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    return create_engine(engine_url)
+    # URL 객체를 사용하면 특수문자 파싱 에러를 원천 차단할 수 있습니다.
+    url_object = URL.create(
+        drivername="mysql+pymysql",
+        username=db_user,
+        password=db_password,  # 알아서 안전하게 변환해 줌!
+        host=db_host,
+        port=db_port,
+        database=db_name
+    )
+    
+    return create_engine(url_object)
 
 @st.cache_data
 def load_traffic_data():
@@ -57,7 +67,7 @@ def show_page():
                 y='traffic_volume',
                 color='vehicle_class',
                 markers=True,
-                labels={'traffic_year': '연도', 'traffic_volume': '교통량', 'vehicle_class': '차종'}
+                labels={'traffic_year': '연도', 'traffic_volume': '교통량(단위: 천)', 'vehicle_class': '차종'}
             )
             fig.update_xaxes(dtick=1) 
             st.plotly_chart(fig, use_container_width=True)
