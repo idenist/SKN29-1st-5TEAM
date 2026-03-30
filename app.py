@@ -18,7 +18,7 @@ if menu == "메인 홈":
     st.title("환영합니다! 👋")
     st.write("통합 플랫폼의 메인 화면입니다. 왼쪽 사이드바에서 원하시는 메뉴를 선택해 주세요!")
 
-elif menu == "맞춤형 자동차 통계":
+elif menu == "등록된 자동차 통계":
     show_stats() # 기존 carmaster_db 데이터 화면
 
 elif menu == "연도별 등록 추이":
