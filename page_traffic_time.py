@@ -27,12 +27,11 @@ def get_latest_traffic_data():
     except Exception as e:
         st.error(f"데이터베이스 연결 오류가 발생했습니다: {e}")
         return None
-
+# 주요 도시
 def show_page():
     st.title("⏱️ 주요 도시 소요시간")
     
     data = get_latest_traffic_data()
-    
     if not data:
         st.warning("현재 소요시간 데이터를 불러올 수 없습니다.")
         return
