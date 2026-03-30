@@ -3,6 +3,7 @@ import streamlit as st
 # 🌟 분리해 둔 화면 함수들을 불러옵니다!
 from page_faq import show_faq
 from page_stats import show_stats, show_yearly_stats  # 👈 show_yearly_stats 추가!
+import page_map  # 새로 만든 지도 페이지 모듈
 from sidebar import sidebar
 
 # 페이지 기본 설정
@@ -27,3 +28,7 @@ elif menu == "휴게소 정보":
     
 elif menu == "FAQ 게시판":
     show_faq() 
+
+elif menu == "휴게소 위치 지도":
+    # 새로 만든 page_map.py 안의 함수를 호출!
+    page_map.show_rest_area_map()
