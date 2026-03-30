@@ -117,6 +117,7 @@ if menu == "메인 홈":
         .hero-center {{
             align-items: center;
             text-align: center;
+            width:550px;
         }}
 
         .hero-right {{
@@ -141,7 +142,7 @@ if menu == "메인 홈":
 
         /* 👇 여기서부터 수정된 부분입니다 (글자 크기, 두께, 자간 조정) */
         .hero-label {{
-            font-size: clamp(3rem, 6vw, 6rem); /* 양옆 글자보다 살짝 더 크게 설정 */
+            font-size: clamp(2rem, 6vw, 2rem); /* 양옆 글자보다 살짝 더 크게 설정 */
             font-weight: 900;                  /* 가장 굵은 폰트 적용 */
             line-height: 1.2;
             margin: 0;
@@ -152,7 +153,7 @@ if menu == "메인 홈":
 
         .hero-brand {{
             font-family: "Coral Black", "Impact", sans-serif;
-            font-size: clamp(3rem, 8vw, 6.5rem);
+            font-size: clamp(8rem, 8vw, 8rem);
             font-weight: 900;
             text-transform: uppercase;
             color: white;
