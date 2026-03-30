@@ -5,6 +5,7 @@ from page_faq import show_faq
 from page_stats import show_stats, show_yearly_stats  # 👈 show_yearly_stats 추가!
 from page_traffic import show_page
 import page_map  # 새로 만든 지도 페이지 모듈
+import page_traffic_time # 👈 새로 만든 실시간 소요시간 페이지 모듈 임포트!
 from sidebar import sidebar
 from PIL import Image 
 import pillow_avif
@@ -16,31 +17,10 @@ st.set_page_config(page_title="HI-REST", page_icon="🛣️", layout="wide")
 menu = sidebar()
 
 if menu == "메인 홈":
-<<<<<<< HEAD
+
     import base64
     import streamlit.components.v1 as components
-=======
-    st.header("👋 HI-REST에 오신 것을 환영합니다")
-    col1, col2 = st.columns(2)
-
-    # 2. 첫 번째 컬럼에 내용 추가
-    with col1:
-        my_image = Image.open('./highway.avif')
-        st.image(my_image)
-
-    # 3. 두 번째 컬럼에 내용 추가
-    with col2:
-        # 목차
-        st.markdown("""
-        <a class="toc-btn" href="#car-status">자동차 등록 현황</a>
-        <a class="toc-btn" href="#highway-status">고속도로 이용 현황</a>
-        <a class="toc-btn" href="#rest-status">휴게소 현황</a>
-        """, unsafe_allow_html=True)
     
-    st.divider()
-    
-    st.subheader("📍 HI-REST란?")
->>>>>>> 97fb9090a3a2418d5af38df855c526af30ee9bc1
     st.markdown("""
     <style>
     /* 메인 본문 폭/여백 제거 */
@@ -69,6 +49,7 @@ if menu == "메인 홈":
         with open(path, "rb") as f:
             return base64.b64encode(f.read()).decode()
 
+    # 이미지 파일 경로 확인 필요
     img_base64 = img_to_base64("highway.png")
 
     hero_html = f"""
@@ -160,12 +141,16 @@ if menu == "메인 홈":
             margin: 0;
         }}
 
+        /* 👇 여기서부터 수정된 부분입니다 (글자 크기, 두께, 자간 조정) */
         .hero-label {{
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            opacity: 0.95;
+            font-size: clamp(3rem, 6vw, 6rem); /* 양옆 글자보다 살짝 더 크게 설정 */
+            font-weight: 900;                  /* 가장 굵은 폰트 적용 */
+            line-height: 1.2;
+            margin: 0;
+            letter-spacing: 4px;               /* 글자 간격을 넓혀서 로고 느낌 강조 */
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.3); /* 배경에 묻히지 않게 은은한 그림자 추가 */
         }}
+        /* 👆 수정 끝 */
 
         .hero-number {{
             font-size: clamp(4rem, 10vw, 7.5rem);
@@ -214,9 +199,7 @@ if menu == "메인 홈":
                 </div>
 
                 <div class="hero-center">
-                    <div class="hero-label">평균속도</div>
-                    <div class="hero-number">84</div>
-                    <div class="hero-unit">km/h</div>
+                    <div class="hero-label">HI-REST</div>
                 </div>
 
                 <div class="hero-right">
@@ -235,7 +218,6 @@ if menu == "메인 홈":
 
     components.html(hero_html, height=800, scrolling=False)
 
-
 elif menu == "등록된 자동차 통계":
     show_stats() # 기존 carmaster_db 데이터 화면
 
@@ -244,6 +226,9 @@ elif menu == "연도별 등록 추이":
 
 elif menu == "연도별 고속도로 통행량":  # 👈 사용자가 이 메뉴를 클릭하면
     show_page()
+
+elif menu == "주요 지역 소요 시간": # 👈 신규 추가된 메뉴 연결!
+    page_traffic_time.show_page()
     
 elif menu == "휴게소 정보":
     pass
