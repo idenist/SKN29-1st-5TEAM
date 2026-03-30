@@ -110,7 +110,8 @@ def show_yearly_stats():
         # 데이터 분리 (총계 행과 개별 차종 행 분리)
         df_detail = df_yearly[df_yearly['vehicle_type'] != '총계']
         df_total = df_yearly[df_yearly['vehicle_type'] == '총계'].copy() # SettingWithCopyWarning 방지
-
+        df_detail = df_detail.rename(columns={'reg_year': '연도'})
+        df_detail = df_detail.rename(columns={'total_count': '등록대수'})
         # Section 1: 연도별 등록 추이 (Line Chart)
         st.subheader("📅 1. 연도별 자동차 등록 추이")
         
@@ -127,7 +128,6 @@ def show_yearly_stats():
                 x='reg_year', 
                 y='total_count', 
                 markers=True, 
-                text='text_label', # 새로 만든 M 단위 텍스트 사용
                 title='연도별 전체 누적 등록 대수',
                 labels={'reg_year': '연도', 'total_count': '등록대수'}, # 축 이름 변경
                 line_shape='spline' # 부드러운 곡선 적용
@@ -168,7 +168,11 @@ def show_yearly_stats():
             )
             # ----------------------------------------------
         else:
-            fig1 = px.bar(df_detail, x='reg_year', y='total_count', color='vehicle_type', title='연도별 차종별 누적 등록 대수')
+            fig1 = px.bar(df_detail, x='연도', y='등록대수', color='vehicle_type', title='연도별 차종별 누적 등록 대수')
+            # fig1.update_traces(
+            #     texttemplate='%{text:,.0f}',
+            #     textposition='outside'
+            # )
             fig1.update_xaxes(type='category')
             
         st.plotly_chart(fig1, use_container_width=True)
@@ -178,29 +182,29 @@ def show_yearly_stats():
         # Section 2: 특정 연도의 용도별/차종별 비중 분석
         st.subheader("🔍 2. 연도별 상세 비중 분석")
         
-        year_list = sorted(df_detail['reg_year'].unique(), reverse=True)
+        year_list = sorted(df_detail['연도'].unique(), reverse=True)
         selected_year = st.selectbox("상세 분석을 원하시는 연도를 선택하세요", year_list)
         
-        df_year = df_detail[df_detail['reg_year'] == selected_year]
+        df_year = df_detail[df_detail['연도'] == selected_year]
         
         col1, col2 = st.columns(2)
         
         with col1:
             st.markdown(f"**[{selected_year}년] 차종별 비중**")
-            fig_pie1 = px.pie(df_year, values='total_count', names='vehicle_type', hole=0.4)
+            fig_pie1 = px.pie(df_year, values='등록대수', names='vehicle_type', hole=0.4)
             st.plotly_chart(fig_pie1, use_container_width=True)
             
         with col2:
             st.markdown(f"**[{selected_year}년] 용도별 비중 (관용/자가용/영업용)**")
             df_usage = pd.melt(df_year, id_vars=['vehicle_type'], 
                                value_vars=['official_count', 'private_count', 'business_count'], 
-                               var_name='용도', value_name='등록대수')
+                               var_name='용도', value_name='등록수')
             
             usage_map = {'official_count': '관용', 'private_count': '자가용', 'business_count': '영업용'}
             df_usage['용도'] = df_usage['용도'].map(usage_map)
             
-            usage_summary = df_usage.groupby('용도')['등록대수'].sum().reset_index()
-            fig_pie2 = px.pie(usage_summary, values='등록대수', names='용도', hole=0.4, 
+            usage_summary = df_usage.groupby('용도')['등록수'].sum().reset_index()
+            fig_pie2 = px.pie(usage_summary, values='등록수', names='용도', hole=0.4, 
                               color_discrete_sequence=px.colors.qualitative.Pastel)
             st.plotly_chart(fig_pie2, use_container_width=True)
 
