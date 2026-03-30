@@ -66,7 +66,7 @@ def fetch_restarea_details(_engine, restarea_name):
         df_events = pd.read_sql(query_events, _engine)
     except: df_events = pd.DataFrame()
 
-    # 4. 편의 시설 정보 (추가됨)
+    # 4. 편의 시설 정보
     try:
         query_amenties = f"SELECT rest_eng, rest_elc, rest_plc, rest_pha, rest_nur FROM rest_area_amenties WHERE restarea_name = '{restarea_name}'"
         df_amenties = pd.read_sql(query_amenties, _engine)
@@ -87,7 +87,7 @@ def show_detail_popup(_engine, restarea_name):
     if gas_info is not None and pd.notna(gas_info.get('svarAddr')):
         st.markdown(f"📍 **주소: {gas_info['svarAddr']}**")
     
-    # --- [추가] 편의 시설 정보 (심플하게 표시) ---
+    # --- 편의 시설 정보 ---
     if amenties_info is not None:
         amenty_list = []
         if amenties_info.get('rest_eng') == 'Y': amenty_list.append("🛠️ 차량정비")
@@ -122,7 +122,6 @@ def show_detail_popup(_engine, restarea_name):
     if not df_events.empty:
         for _, event in df_events.iterrows():
             with st.expander(f"📌 {event['event_name']} ({event['start_time']} ~ {event['end_time']})", expanded=True):
-                # [정제] 취소선 깨짐 방지를 위해 ~~만 정제
                 clean_detail = str(event['event_detail']).replace('~~', '~')
                 st.write(clean_detail)
     else:
@@ -159,7 +158,7 @@ def show_detail_popup(_engine, restarea_name):
 # 2. 메인 화면
 # ==========================================
 def show_rest_area_map():
-    st.title("📍 고속도로 휴게소 탐색기")
+    st.title("🗺️ 노선별 휴게소 정보")
     engine = get_rest_area_db_connection()
     if not engine: return
 
@@ -174,20 +173,27 @@ def show_rest_area_map():
     df_all = df_all.dropna(subset=['yValue', 'xValue'])
 
     all_routes = sorted(df_all['route_name'].unique().tolist())
-    selected_routes = st.multiselect("🗺️ 노선 선택", options=all_routes, default=['경부선'] if '경부선' in all_routes else [all_routes[0]])
+    selected_routes = st.multiselect("🛣️ 노선 선택", options=all_routes, default=['경부선'] if '경부선' in all_routes else [all_routes[0]])
     filtered_df = df_all[df_all['route_name'].isin(selected_routes)].copy()
 
     if not filtered_df.empty:
         fig = go.Figure()
         routes = filtered_df['route_name'].unique()
+        
+        # 색상표 가져오기 (Plotly 기본 질적 색상표)
+        color_palette = px.colors.qualitative.Plotly
+
         for i, route in enumerate(routes):
             route_data = filtered_df[filtered_df['route_name'] == route]
+            # 노선별로 다른 색상 할당
+            marker_color = color_palette[i % len(color_palette)]
+            
             fig.add_trace(go.Scattermapbox(
                 lat=route_data['yValue'], lon=route_data['xValue'],
                 mode='markers',
                 marker=go.scattermapbox.Marker(
                     size=18, 
-                    color='firebrick', 
+                    color=marker_color,
                     symbol='circle', 
                     opacity=0.9,
                     allowoverlap=True
@@ -225,11 +231,22 @@ def show_rest_area_map():
         if list_df.empty:
             st.warning("검색 결과가 없습니다.")
         else:
-            with st.container(height=350):
-                for name in list_df['restarea_name']:
-                    if st.button(name, use_container_width=True, key=f"btn_list_{name}"):
-                        st.session_state.last_opened = None 
-                        show_detail_popup(engine, name)
+            # 선택된 노선들 추출 (검색어에 의해 필터링된 결과 기준)
+            unique_routes = list_df['route_name'].unique().tolist()
+            
+            # 노선별 탭(Tab) 생성
+            tabs = st.tabs([f"🛣️ {route}" for route in unique_routes])
+            
+            # 각 탭 내부에 스크롤 영역과 휴게소 버튼 배치
+            for i, route in enumerate(unique_routes):
+                with tabs[i]:
+                    with st.container(height=350):
+                        route_df = list_df[list_df['route_name'] == route]
+                        
+                        for name in route_df['restarea_name']:
+                            if st.button(name, use_container_width=True, key=f"btn_list_{route}_{name}"):
+                                st.session_state.last_opened = None 
+                                show_detail_popup(engine, name)
 
 if __name__ == '__main__':
     show_rest_area_map()

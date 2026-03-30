@@ -7,9 +7,10 @@ from page_traffic import show_page
 import page_map  # 새로 만든 지도 페이지 모듈
 from sidebar import sidebar
 from PIL import Image 
+import pillow_avif
 
 # 페이지 기본 설정
-st.set_page_config(page_title="통합 플랫폼 대시보드", page_icon="🚥", layout="wide")
+st.set_page_config(page_title="HI-REST", page_icon="🛣️", layout="wide")
 
 # 👈 메뉴에 '연도별 등록 추이'를 추가했습니다.
 menu = sidebar()
@@ -45,7 +46,7 @@ st.markdown("""
     
 # 메인 화면 로직 분기
 if menu == "메인 홈":
-    st.header("👋 HI-REST에 오신 것을 환영합니다 😍")
+    st.header("👋 HI-REST에 오신 것을 환영합니다")
     col1, col2 = st.columns(2)
 
     # 2. 첫 번째 컬럼에 내용 추가

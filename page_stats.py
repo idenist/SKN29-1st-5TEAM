@@ -90,7 +90,7 @@ def show_yearly_stats():
     if not df_yearly.empty:
         # 데이터 분리 (총계 행과 개별 차종 행 분리)
         df_detail = df_yearly[df_yearly['vehicle_type'] != '총계']
-        df_total = df_yearly[df_yearly['vehicle_type'] == '총계']
+        df_total = df_yearly[df_yearly['vehicle_type'] == '총계'].copy() # SettingWithCopyWarning 방지
 
         # Section 1: 연도별 등록 추이 (Line Chart)
         st.subheader("📅 1. 연도별 자동차 등록 추이")
@@ -98,12 +98,60 @@ def show_yearly_stats():
         trend_option = st.radio("추이 보기 방식", ["전체 합계 보기", "차종별로 나누어 보기"], horizontal=True)
         
         if trend_option == "전체 합계 보기":
-            fig1 = px.line(df_total, x='reg_year', y='total_count', markers=True, text='total_count', title='연도별 전체 누적 등록 대수')
-            fig1.update_traces(textposition="top center")
+            # --- 수정된 부분: 단위 M 적용 및 디자인 개선 ---
+            # 1. M 단위로 변환 및 포맷팅된 텍스트 열 추가
+            df_total['total_count_M'] = df_total['total_count'] / 1_000_000
+            df_total['text_label'] = df_total['total_count_M'].apply(lambda x: f"{x:.1f}M")
+
+            fig1 = px.line(
+                df_total, 
+                x='reg_year', 
+                y='total_count', 
+                markers=True, 
+                text='text_label', # 새로 만든 M 단위 텍스트 사용
+                title='연도별 전체 누적 등록 대수',
+                labels={'reg_year': '연도', 'total_count': '등록대수'}, # 축 이름 변경
+                line_shape='spline' # 부드러운 곡선 적용
+            )
+            
+            # 선, 마커, 텍스트 위치 등 상세 스타일 조정
+            fig1.update_traces(
+                textposition="top center",
+                line=dict(width=3.5), 
+                marker=dict(size=8, line=dict(width=2, color='white')),
+                hovertemplate="%{x}년: %{y:,.0f}대<extra></extra>" # 툴팁에는 원래 숫자(단위: 대) 표시
+            )
+
+            # 전체 레이아웃 테마 및 축 스타일 개선
+            fig1.update_layout(
+                template='plotly_white',
+                margin=dict(l=10, r=10, t=50, b=10)
+            )
+            
+            fig1.update_xaxes(
+                type='category',
+                showgrid=False,
+                title_font=dict(size=14, color='gray'),
+                tickfont=dict(size=12, color='dimgray')
+            )
+            
+            # 👇 여기서부터 수정된 부분입니다.
+            fig1.update_yaxes(
+                showgrid=True, 
+                gridcolor='#F0F0F0',
+                zeroline=False,
+                title_font=dict(size=14, color='gray'),
+                tickfont=dict(size=12, color='dimgray'),
+                tickmode='linear',         # 눈금을 일정한 간격으로 설정
+                tick0=22000000,            # 눈금 시작 기준점 (22M)
+                dtick=1000000,             # 눈금 간격 (1M = 1,000,000)
+                range=[21500000, 27500000] # y축 표시 범위 (마커가 잘리지 않게 위아래로 약간의 여유를 줌)
+            )
+            # ----------------------------------------------
         else:
             fig1 = px.bar(df_detail, x='reg_year', y='total_count', color='vehicle_type', title='연도별 차종별 누적 등록 대수')
+            fig1.update_xaxes(type='category')
             
-        fig1.update_xaxes(type='category')
         st.plotly_chart(fig1, use_container_width=True)
 
         st.markdown("---")
