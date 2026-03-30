@@ -43,13 +43,28 @@ def show_stats():
             chart_type = st.radio("차트 형태", ["파이 차트 🍩", "바 차트 📊"], horizontal=True)
 
         dynamic_summary = df_car.groupby(selected_col)['cnt'].sum().reset_index()
+        dynamic_summary = dynamic_summary.rename(columns={'cnt': '등록대수'})
         
         if chart_type == "파이 차트 🍩":
-            fig1 = px.pie(dynamic_summary, values='cnt', names=selected_col, title=f'✨ 전체 기간 {selected_label}', hole=0.4)
+            fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, title=f'✨ 전체 기간 {selected_label}', hole=0.4)
         else:
-            dynamic_summary = dynamic_summary.sort_values(by='cnt', ascending=False)
-            fig1 = px.bar(dynamic_summary, x=selected_col, y='cnt', title=f'✨ 전체 기간 {selected_label}', text_auto=True, color=selected_col)
-            fig1.update_layout(showlegend=False) 
+            dynamic_summary = dynamic_summary.sort_values(by='등록대수', ascending=False)
+            fig1 = px.bar(
+                dynamic_summary,
+                x=selected_col,
+                y='등록대수',
+                title=f'✨ 전체 기간 {selected_label}',
+                text='등록대수',
+                color=selected_col
+            )
+
+            fig1.update_traces(
+                texttemplate='%{text:,.0f}',
+                textposition='outside'
+            )
+
+            fig1.update_layout(showlegend=False)
+            fig1.update_yaxes(tickformat=',.0f')
             
         st.plotly_chart(fig1, use_container_width=True)
         st.markdown("---")
@@ -63,13 +78,17 @@ def show_stats():
         
         if trend_label == "선택 안 함 (전체 합계만 보기)":
             month_summary = df_car.groupby('수집년월')['cnt'].sum().reset_index().sort_values(by='수집년월')
-            fig2 = px.line(month_summary, x='수집년월', y='cnt', title='월별 전체 신규 등록 대수 추이', markers=True, text='cnt')
-            fig2.update_traces(textposition="top center")
+            month_summary = month_summary.rename(columns={'cnt': '등록대수'})
+            fig2 = px.line(month_summary, x='수집년월', y='등록대수', title='월별 전체 신규 등록 대수 추이', markers=True, text='등록대수')
+            fig2.update_traces(textposition="top center", texttemplate='%{text:,.0f}')
         else:
             trend_col = category_options[trend_label]
             month_summary = df_car.groupby(['수집년월', trend_col])['cnt'].sum().reset_index().sort_values(by='수집년월')
-            fig2 = px.bar(month_summary, x='수집년월', y='cnt', color=trend_col, title=f'월별 {trend_label} 추이', text_auto=True, barmode='group')
-        
+            month_summary = month_summary.rename(columns={'cnt': '등록대수'})
+            fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group')
+
+        fig2.update_layout(showlegend=False)
+        fig2.update_yaxes(tickformat=',.0f')
         fig2.update_xaxes(type='category') 
         st.plotly_chart(fig2, use_container_width=True)
 
