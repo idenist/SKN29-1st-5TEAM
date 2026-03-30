@@ -1,22 +1,29 @@
 import streamlit as st
+
+# 🌟 분리해 둔 화면 함수들을 불러옵니다!
+from page_faq import show_faq
+from page_stats import show_stats, show_yearly_stats  # 👈 show_yearly_stats 추가!
 from sidebar import sidebar
-import main_page
-import current_situation
-import rest_place
 
-st.set_page_config(
-    page_title="전국자동차등록 현황 및 기업 FAQ 조회 시스템",
-    layout="wide"  # 화면을 넓게 사용 (기본값은 "centered")
-)
+# 페이지 기본 설정
+st.set_page_config(page_title="통합 플랫폼 대시보드", page_icon="🚥", layout="wide")
 
-# ============================================
-# 사이드바에서 선택한 메뉴 항목에 따라 다른 화면을 보여줌
-# ============================================
+# 👈 메뉴에 '연도별 등록 추이'를 추가했습니다.
 menu = sidebar()
 
-if menu == "메인 페이지":
-    main_page.main()
-elif menu == "연간 현황 정보":
-    current_situation.main()
+# 메인 화면 로직 분기
+if menu == "메인 홈":
+    st.title("환영합니다! 👋")
+    st.write("통합 플랫폼의 메인 화면입니다. 왼쪽 사이드바에서 원하시는 메뉴를 선택해 주세요!")
+
+elif menu == "맞춤형 자동차 통계":
+    show_stats() # 기존 carmaster_db 데이터 화면
+
+elif menu == "연도별 등록 추이":
+    show_yearly_stats() # 👈 신규 vehicle_db_year 데이터 화면
+    
 elif menu == "휴게소 정보":
-    rest_place.main()
+    pass
+    
+elif menu == "FAQ 게시판":
+    show_faq() 
