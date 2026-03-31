@@ -1,4 +1,4 @@
 .env
 *.ipynb
 ref*
-__pycache__
+*.pyc
