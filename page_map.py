@@ -46,8 +46,6 @@ def load_all_rest_areas(_engine):
         return pd.DataFrame()
 
 def fetch_restarea_details(_engine, restarea_name):
-    gas_station_name = restarea_name.replace("휴게소", "주유소")
-    
     # 1. 음식 정보
     try:
         df_food = pd.read_sql(f"SELECT foodNm, foodCost, bestfoodyn, etc FROM foodinfo WHERE restarea_name = '{restarea_name}'", _engine)
@@ -55,7 +53,7 @@ def fetch_restarea_details(_engine, restarea_name):
     
     # 2. 주유소 정보
     try:
-        query_gas = f"SELECT gasoline_price, disel_price, lpg_price, lpgYn, svarAddr FROM rest_area_gas WHERE restarea_name = '{gas_station_name}'"
+        query_gas = f"SELECT gasoline_price, disel_price, lpg_price, lpgYn, svarAddr FROM rest_area_gas WHERE restarea_name = '{restarea_name}'"
         df_gas = pd.read_sql(query_gas, _engine)
         gas_info = df_gas.iloc[0] if not df_gas.empty else None
     except: gas_info = None
