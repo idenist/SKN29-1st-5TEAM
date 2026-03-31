@@ -99,7 +99,7 @@ def render_clean_answer(answer_text):
     clean_text = re.sub(r'(다\.|시오\.|요\.)\s*(?=[가-힣a-zA-Z①②③④⑤1-9])', r'\1\n\n', clean_text)
     clean_text = re.sub(r'\n\s*[-=]+\s*\n', '\n\n', clean_text)
     clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
-
+    
     parts = re.split(r'(\[이미지: .*?\])', clean_text)
     
     for part in parts:
