@@ -1,4 +1,3 @@
-# page_traffic.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -6,8 +5,6 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
-
-# 환경변수 및 DB 엔진 설정
 load_dotenv()
 
 @st.cache_resource
@@ -39,7 +36,7 @@ def load_traffic_data():
         st.error(f"데이터베이스 오류: {e}")
         return pd.DataFrame()
 
-# 숫자를 'O억 O,OOO만' 형식으로 변환하는 헬퍼 함수
+# 숫자를 'O억 O,OOO만' 형식으로 변환
 def format_korean_num(num):
     eok = int(num // 100_000_000)
     man = int((num % 100_000_000) // 10_000)
@@ -48,9 +45,7 @@ def format_korean_num(num):
         return f"{eok}억 {man:,}만" if man > 0 else f"{eok}억"
     return f"{man:,}만"
 
-# ============================================
 # 메인 파일에서 호출할 함수
-# ============================================
 def show_page():
     st.title("🚗 고속도로 통행량 추이")
     st.markdown("---")
@@ -62,7 +57,7 @@ def show_page():
         df_total = df[df['vehicle_class'] == '합계'].copy()
 
         if not df_total.empty:
-            # ✨ 1. 데이터 복원 및 단위 변환
+            # 1. 데이터 복원 및 단위 변환
             # 원본 데이터(천 대) -> 실제 대수 -> '억' 단위 변환
             df_total['actual_volume'] = df_total['traffic_volume'] * 1000
             df_total['traffic_Eok'] = df_total['actual_volume'] / 100_000_000
@@ -126,7 +121,7 @@ def show_page():
                 tickfont=dict(size=12, color='dimgray')
             )
             
-            # ✨ 2. Y축 눈금 간격을 1.0(1억)으로 변경
+            # 2. Y축 눈금 간격을 1.0(1억)으로 변경
             fig.update_yaxes(
                 dtick=1.0,               # 눈금 간격을 1억 단위로 설정
                 tickformat=".0f",        # 소수점 없이 정수로 표시 (17, 18, 19...)

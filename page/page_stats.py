@@ -3,9 +3,7 @@ import plotly.express as px
 import pandas as pd
 from utils import load_car_data, load_yearly_car_data
 
-# ==========================================
 # 1. 사용자 맞춤형 통계 화면 (carmaster_db)
-# ==========================================
 def show_stats():
     st.title("🚘 최근 5개월 자동차 신규 등록 통계")
     st.write("2025년 10월 ~ 2026년 2월 자동차 신규 등록 통계")
@@ -23,9 +21,7 @@ def show_stats():
         df_car['수집년월'] = df_car['regist_yy'] + "-" + df_car['regist_mt']
         df_car['연령대'] = df_car['agrde'] + "0대"
 
-        # ==========================================
         # Section 1: 카테고리별 비중 분석
-        # ==========================================
         st.subheader("🔍 1. 항목별 분석")
         category_options = {
             '연료별': '연료명',
@@ -63,9 +59,7 @@ def show_stats():
         st.plotly_chart(fig1, use_container_width=True)
         st.markdown("---")
 
-        # ==========================================
-        # Section 2: 각 항목 월별 분석 (✨ 연령대별 1등 볼드 처리)
-        # ==========================================
+        # Section 2: 각 항목 월별 분석 
         st.subheader("📅 2. 각 항목 월별 분석")
         trend_label = st.selectbox("카테고리를 선택하세요", ["전체 합계"] + list(category_options.keys()))
         
@@ -90,7 +84,7 @@ def show_stats():
             elif trend_label == "성별":
                 fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 분석', barmode='group', color_discrete_sequence=['#1f77b4', '#ef553b'])
             
-            # --- ✨ 연령대별 월별 분석: 1등 레이블 볼드 처리 ---
+            # 연령대별 월별 분석
             elif trend_label == "연령대별":
                 is_percentage_chart = True
                 month_summary['비율(%)'] = month_summary.groupby('수집년월')['등록대수'].transform(lambda x: x / x.sum() * 100)
@@ -99,7 +93,7 @@ def show_stats():
                 # 각 월별 1등 여부 확인
                 filtered_summary['is_top'] = filtered_summary.groupby('수집년월')['비율(%)'].transform(lambda x: x == x.max())
                 
-                # 1등만 볼드 처리 (HTML <b> 사용)
+                # 1등만 볼드 처리
                 filtered_summary['bold_text'] = filtered_summary.apply(
                     lambda x: f"<b>{x['비율(%)']:.1f}%</b>" if x['is_top'] else f"{x['비율(%)']:.1f}%", axis=1
                 )
@@ -132,9 +126,7 @@ def show_stats():
     else:
         st.warning("맞춤형 통계 데이터를 불러오지 못했습니다.")
 
-# ==========================================
 # 2. 연도별/용도별 등록 현황 화면
-# ==========================================
 def show_yearly_stats():
     st.title("📈 연도별 자동차 등록 현황 (2017~2025)")
     st.write("연도별 자동차 등록과 관용/자가용/영업용 비중 분석")

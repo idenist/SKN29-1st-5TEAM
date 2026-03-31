@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # 페이지 설정
 st.set_page_config(layout="wide", page_title="고속도로 휴게소 탐색기")
 
-# --- .env 로드 ---
+# .env 로드
 load_dotenv()
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1").strip()
 DB_PORT = os.getenv("DB_PORT", "3306").strip()
@@ -73,9 +73,7 @@ def fetch_restarea_details(_engine, restarea_name):
     
     return df_food, gas_info, df_events, amenties_info
 
-# ==========================================
 # 1. 팝업창 (Dialog) UI
-# ==========================================
 @st.dialog("휴게소 상세 정보", width="large")
 def show_detail_popup(_engine, restarea_name):
     df_food, gas_info, df_events, amenties_info = fetch_restarea_details(_engine, restarea_name)
@@ -85,7 +83,7 @@ def show_detail_popup(_engine, restarea_name):
     if gas_info is not None and pd.notna(gas_info.get('svarAddr')):
         st.markdown(f"📍 **주소: {gas_info['svarAddr']}**")
     
-    # --- 편의 시설 정보 ---
+    # 편의 시설 정보
     if amenties_info is not None:
         amenty_list = []
         if amenties_info.get('rest_eng') == 'Y': amenty_list.append("🛠️ 차량정비")
@@ -99,7 +97,7 @@ def show_detail_popup(_engine, restarea_name):
     
     st.write("")
 
-    # --- 주유소 정보 ---
+    # 주유소 정보
     st.subheader("⛽ 주유소 및 충전소 정보")
     if gas_info is not None:
         g1, g2, g3 = st.columns(3)
@@ -115,7 +113,7 @@ def show_detail_popup(_engine, restarea_name):
 
     st.divider()
 
-    # --- 행사 정보 ---
+    # 행사 정보
     # 데이터프레임이 비어있지 않은 경우에만 전체 블록을 출력하도록 변경
     if not df_events.empty:
         st.subheader("🎉 진행 중인 행사")
@@ -125,7 +123,7 @@ def show_detail_popup(_engine, restarea_name):
                 st.write(clean_detail)
         st.divider() # 행사가 있을 때만 구분선 표시
 
-    # --- 음식 정보 ---
+    # 음식 정보
     st.subheader("🍴 대표 메뉴 및 식당가")
     if not df_food.empty:
         df_food.fillna({'foodNm': '메뉴명 없음', 'foodCost': 0, 'etc': '', 'bestfoodyn': 'N'}, inplace=True)
@@ -150,9 +148,7 @@ def show_detail_popup(_engine, restarea_name):
         st.session_state.last_opened = restarea_name 
         st.rerun()
 
-# ==========================================
 # 2. 메인 화면
-# ==========================================
 def show_rest_area_map():
     st.title("🗺️ 노선별 휴게소 정보")
     engine = get_rest_area_db_connection()
