@@ -116,16 +116,14 @@ def show_detail_popup(_engine, restarea_name):
     st.divider()
 
     # --- 행사 정보 ---
-    st.subheader("🎉 진행 중인 행사")
+    # 데이터프레임이 비어있지 않은 경우에만 전체 블록을 출력하도록 변경
     if not df_events.empty:
+        st.subheader("🎉 진행 중인 행사")
         for _, event in df_events.iterrows():
             with st.expander(f"📌 {event['event_name']} ({event['start_time']} ~ {event['end_time']})", expanded=True):
                 clean_detail = str(event['event_detail']).replace('~~', '~')
                 st.write(clean_detail)
-    else:
-        st.info("현재 진행 중인 행사가 없습니다.")
-
-    st.divider()
+        st.divider() # 행사가 있을 때만 구분선 표시
 
     # --- 음식 정보 ---
     st.subheader("🍴 대표 메뉴 및 식당가")

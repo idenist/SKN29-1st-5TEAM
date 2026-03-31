@@ -81,7 +81,7 @@ def load_data(table_name):
         return pd.DataFrame()
 
 # ==========================================
-# 4. 텍스트 정제 및 페이지네이션 (기존 코드 유지)
+# 4. 텍스트 정제 및 페이지네이션
 # ==========================================
 def render_clean_answer(answer_text):
     if not answer_text:
@@ -105,10 +105,15 @@ def render_clean_answer(answer_text):
     for part in parts:
         if part.startswith('[이미지:') and part.endswith(']'):
             img_url = part.replace('[이미지: ', '').replace(']', '').strip()
-            try:
-                st.image(img_url, use_container_width=True)
-            except:
-                pass
+            # 테두리(border)와 그림자(box-shadow)를 제거하고 배경을 투명하게 설정
+            st.markdown(
+                f"""
+                <div style="text-align: center; margin: 10px 0;">
+                    <img src="{img_url}" style="max-width: 600px; width: 100%; height: auto; border: none;">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         else:
             if part.strip():
                 part = re.sub(r'(?<!<)(https?://[a-zA-Z0-9./\-_?=&%]+)(?!>)', r'<\1>', part)

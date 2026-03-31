@@ -212,7 +212,7 @@ def show_stats():
         # 공통 레이아웃 업데이트
         if is_percentage_chart:
             fig2.update_yaxes(title_text='비중 (%)', ticksuffix='%') 
-        elif trend_label != "선택 안 함 (전체 합계만 보기)": 
+        elif trend_label != "전체 합계": 
             fig2.update_yaxes(tickformat=',.0f', title_text='등록대수')
             
         fig2.update_xaxes(type='category') 
@@ -227,7 +227,7 @@ def show_stats():
 # ==========================================
 def show_yearly_stats():
     st.title("📈 연도별 자동차 등록 현황 (2017~2025)")
-    st.write("연도별 전체 등록 추이와 관용/자가용/영업용 비중을 분석해 보세요!")
+    st.write("연도별 자동차 등록과 관용/자가용/영업용 비중 분석")
     st.markdown("---")
 
     df_yearly = load_yearly_car_data()
@@ -238,9 +238,35 @@ def show_yearly_stats():
         df_detail = df_detail.rename(columns={'reg_year': '연도'})
         df_detail = df_detail.rename(columns={'total_count': '등록대수'})
         
-        st.subheader("📅 1. 연도별 자동차 등록 추이")
+        # vehicle_type -> '차종'으로 변경
+        df_detail = df_detail.rename(columns={'vehicle_type': '차종'})
         
-        trend_option = st.radio("추이 보기 방식", ["전체 합계 보기", "차종별로 나누어 보기"], horizontal=True)
+        # 제목 변경 및 최소/최대 연도 수치 강조 레이아웃 (좌우 배치)
+        min_year = df_total['reg_year'].min()
+        max_year = df_total['reg_year'].max()
+        count_min = df_total[df_total['reg_year'] == min_year]['total_count'].values[0]
+        count_max = df_total[df_total['reg_year'] == max_year]['total_count'].values[0]
+
+        # 등록대수 증가폭 계산
+        diff_count = count_max - count_min
+
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.subheader("📅 1. 연도별 자동차 등록")
+        with col2:
+            # 글자 크기를 키우고(24px) 증가폭 수치 추가(18px)
+            st.markdown(
+                f"<div style='text-align: right; padding-top: 1.0rem;'>"
+                f"<div style='color: #555; font-size: 24px; font-weight: bold;'>"
+                f"{min_year}년 약 {count_min:,.0f}대 ➡️ {max_year}년 약 {count_max:,.0f}대</div>"
+                f"<div style='color: #777; font-size: 18px; font-weight: normal; margin-top: 0.2rem;'>"
+                f"(총 {diff_count:,.0f}대 증가)</div>"
+                f"</div>", 
+                unsafe_allow_html=True
+            )
+        
+        # 차종 비율 보기 이름 변경
+        trend_option = st.radio("추이 보기 방식", ["전체 합계 보기", "차종 비율 보기"], horizontal=True)
         
         if trend_option == "전체 합계 보기":
             df_total['total_count_M'] = df_total['total_count'] / 1_000_000
@@ -267,14 +293,24 @@ def show_yearly_stats():
                 tickmode='linear', tick0=22000000, dtick=1000000, range=[21500000, 27500000] 
             )
         else:
-            fig1 = px.bar(df_detail, x='연도', y='등록대수', color='vehicle_type', title='연도별 차종별 누적 등록 대수')
+            # 밑에서부터 비율이 큰 순서대로 올라가도록 정렬 (등록대수가 큰 항목이 막대 하단에 깔리게 설정)
+            df_detail_sorted = df_detail.sort_values(by=['연도', '등록대수'], ascending=[True, False])
+            
+            # ✨ 수정: 1. 차종 비율 보기에만 파란색 계열(모노톤) 색상 적용
+            blue_palette = ['#1f77b4', '#6baed6', '#9ecae1', '#c6dbef']
+            
+            fig1 = px.bar(df_detail_sorted, x='연도', y='등록대수', color='차종', 
+                          title='연도별 차종 누적 등록 대수',
+                          color_discrete_sequence=blue_palette) # 파란색 계열 통일
             fig1.update_xaxes(type='category')
+            fig1.update_layout(plot_bgcolor='white', yaxis=dict(showgrid=True, gridcolor='#E5E7EB'))
             
         st.plotly_chart(fig1, use_container_width=True)
 
         st.markdown("---")
 
-        st.subheader("🔍 2. 연도별 상세 비중 분석")
+        # 소제목 간결하게 변경
+        st.subheader("🔍 2. 연도별 상세 분석")
         
         year_list = sorted(df_detail['연도'].unique(), reverse=True)
         selected_year = st.selectbox("상세 분석을 원하시는 연도를 선택하세요", year_list)
@@ -285,12 +321,17 @@ def show_yearly_stats():
         
         with col1:
             st.markdown(f"**[{selected_year}년] 차종별 비중**")
-            fig_pie1 = px.pie(df_year, values='등록대수', names='vehicle_type', hole=0.4)
+            # 승용차인 경우만 0.1만큼 바깥으로 분리
+            pull_vals1 = [0.1 if val == '승용' else 0 for val in df_year['차종']]
+            
+            # ✨ 수정: 2. 상세 분석의 차종 파이 차트는 기본(원래) 색상으로 원상 복구
+            fig_pie1 = px.pie(df_year, values='등록대수', names='차종', hole=0.4)
+            fig_pie1.update_traces(pull=pull_vals1, textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig_pie1, use_container_width=True)
             
         with col2:
             st.markdown(f"**[{selected_year}년] 용도별 비중 (관용/자가용/영업용)**")
-            df_usage = pd.melt(df_year, id_vars=['vehicle_type'], 
+            df_usage = pd.melt(df_year, id_vars=['차종'], 
                                value_vars=['official_count', 'private_count', 'business_count'], 
                                var_name='용도', value_name='등록수')
             
@@ -298,8 +339,13 @@ def show_yearly_stats():
             df_usage['용도'] = df_usage['용도'].map(usage_map)
             
             usage_summary = df_usage.groupby('용도')['등록수'].sum().reset_index()
+            
+            # 영업용인 경우만 0.1만큼 바깥으로 분리 (입체감 부여)
+            pull_vals2 = [0.1 if val == '영업용' else 0 for val in usage_summary['용도']]
+            
             fig_pie2 = px.pie(usage_summary, values='등록수', names='용도', hole=0.4, 
                               color_discrete_sequence=px.colors.qualitative.Pastel)
+            fig_pie2.update_traces(pull=pull_vals2, textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig_pie2, use_container_width=True)
 
     else:
