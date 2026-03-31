@@ -2,12 +2,11 @@ import streamlit as st
 import base64
 import streamlit.components.v1 as components
 
-# 각 페이지 모듈 임포트 (기존 경로 유지)
-from page_faq import show_faq
-from page_stats import show_stats, show_yearly_stats 
-from page_traffic import show_page
-import page_map  
-import page_traffic_time 
+from page.page_faq import show_faq
+from page.page_stats import show_stats, show_yearly_stats 
+from page.page_traffic import show_page
+import page.page_map as page_map
+import page.page_traffic_time as page_traffic_time
 from sidebar import sidebar
 
 # 1. 페이지 기본 설정
@@ -55,7 +54,7 @@ if menu == "메인 홈":
             return ""
 
     # 이미지 파일 로드
-    img_base64 = img_to_base64("highway.png")
+    img_base64 = img_to_base64("picture/highway.png")
 
     hero_html = f"""
     <!DOCTYPE html>

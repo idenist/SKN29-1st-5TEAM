@@ -3,13 +3,9 @@ import pymysql
 import os
 import requests
 from dotenv import load_dotenv
-
-# .env 파일 로드
 load_dotenv()
 
-# ==========================================
 # 1. DB에서 가장 최근 데이터 가져오기
-# ==========================================
 def get_latest_traffic_data():
     try:
         conn = pymysql.connect(
@@ -30,15 +26,13 @@ def get_latest_traffic_data():
         st.error(f"데이터베이스 연결 오류가 발생했습니다: {e}")
         return None
 
-# ==========================================
 # 2. ITS API로 구간별 대표 CCTV 가져오기 (수정된 좌표 범위)
-# ==========================================
 def get_route_cctv_url(route_name):
     api_key = os.getenv("ITS_API_KEY")
     if not api_key:
         return None, None
 
-    # 각 노선별 대표 핵심 길목 (검색 성공률을 높이기 위해 범위를 최적화함)
+    # 각 노선별 대표 핵심 길목 (검색 성공률을 높이기 위해 범위 최적화)
     route_coords = {
         "서울 ➔ 부산": {"minX": 127.10, "maxX": 127.20, "minY": 36.75, "maxY": 36.85}, 
         "부산 ➔ 서울": {"minX": 127.00, "maxX": 127.10, "minY": 37.40, "maxY": 37.50}, 
@@ -90,9 +84,7 @@ def get_route_cctv_url(route_name):
     
     return None, None
 
-# ==========================================
 # 3. 팝업창(모달) 띄우기 함수 (크기 확대 버전)
-# ==========================================
 @st.dialog("📺 실시간 CCTV 영상 보기", width="large")
 def open_cctv_popup(route_name):
     st.subheader(f"📍 {route_name} 구간 상황")
@@ -103,7 +95,7 @@ def open_cctv_popup(route_name):
     if cctv_url:
         st.info(f"**현재 위치:** {cctv_name}")
         
-        # 🌟 여기를 수정합니다! autoplay와 muted 옵션을 추가하세요.
+        # 여기를 수정합니다! autoplay와 muted 옵션을 추가하세요.
         st.video(cctv_url, autoplay=True, muted=True) 
         
     else:
@@ -112,9 +104,7 @@ def open_cctv_popup(route_name):
     st.write("")
     if st.button("창 닫기", use_container_width=True, type="primary"):
         st.rerun()
-# ==========================================
 # 4. 화면 UI 구성
-# ==========================================
 def show_page():
     st.title("⏱️ 주요 도시 소요시간")
     
@@ -188,7 +178,7 @@ def show_page():
                 if st.button(f"🎥 CCTV 보기", key=f"btn_{route_name}", use_container_width=True):
                     open_cctv_popup(route_name)
 
-    # --- 탭별 렌더링 ---
+    # 탭별 렌더링
     with tab1:
         st.subheader("서울에서 출발하는 노선")
         st.write("") 
