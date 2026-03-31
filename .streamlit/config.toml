@@ -1,6 +1,6 @@
 [theme]
-primaryColor = "#08c7b4"         # 신뢰감을 주는 블루 (버튼, 링크)
-backgroundColor = "#FFFFFF"       # 깨끗한 화이트 배경
-secondaryBackgroundColor = "#F8F9FA" # 아주 연한 그레이 (사이드바, 카드)
-textColor = "#212529"             # 가독성 높은 짙은 회색
-font = "sans serif"               # 현대적인 산세리프 폰트
+primaryColor = "#08c7b4"          # 신뢰감을 주는 블루 (버튼, 링크)
+backgroundColor = "#FFFFFF"        # 깨끗한 화이트 배경
+secondaryBackgroundColor = "#E9ECEF" # 부드러운 멜란지 그레이로 변경
+textColor = "#212529"              # 가독성 높은 짙은 회색
+font = "sans serif"                # 현대적인 산세리프 폰트
