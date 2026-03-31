@@ -34,7 +34,7 @@ def show_faq():
             if 'h_selected_sub' not in st.session_state or st.session_state.h_selected_sub not in h_sub_cats:
                 st.session_state.h_selected_sub = h_sub_cats[0]
 
-            st.markdown("### 📌 소분류 선택")
+            st.markdown("### 📌 FAQ 구분 선택")
             sub_cols = st.columns(6)
             for i, cat in enumerate(h_sub_cats):
                 with sub_cols[i % 6]:

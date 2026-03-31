@@ -106,7 +106,7 @@ def render_clean_answer(answer_text):
         if part.startswith('[이미지:') and part.endswith(']'):
             img_url = part.replace('[이미지: ', '').replace(']', '').strip()
             try:
-                st.image(img_url, use_container_width=True)
+                st.image(img_url) # 이미지 수정
             except:
                 pass
         else:
