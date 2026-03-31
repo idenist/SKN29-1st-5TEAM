@@ -4,12 +4,26 @@
 
 ## 팀 구성
 
-| 이름  | 역할                                                          |
-|-----  |--------------------------------------------------------- ----|
-| 윤대성 | |
-| 윤승혁 | |
-| 최지용 | |
-| 한예나 | |
+<table align="center">
+  <tr>
+    <td align="center" width="190px"><img src="./picture/2h8XxT6hr24MKZFGBo2UW3ho7PZxHmedkIpORL9nEpu-aCK9SG6Q5Zb-PveW7qUMkXxdm9hi0Wb5aCxiOQCMAg (1).png" width="100" style="object-fit: contain; aspect-ratio: 1/1;"></td>
+    <td align="center" width="190px"><img src="./picture/HBEyYPBCLGqnOQ7P-ElavftUeK1Orf3QENCcXk-5m6QIx2qqjSIpdB6XsdaKTdvE2nR2ngCNq5hiBKC_GhmNkg.png" width="100" style="object-fit: contain; aspect-ratio: 1/1;"></td>
+    <td align="center" width="190px"><img src="./picture/fjG_du5l4xE1o_v_AmZWztwKi6XNGT_W0AdTmjV17wQV1j7PHK4bdMe1nJ2E47i7sPuXJp1Pmod-Di4Gq7q_Kw.png" width="100" style="object-fit: contain; aspect-ratio: 1/1;"></td>
+    <td align="center" width="190px"><img src="./picture/EVQ1qeevGhLxkMJjLFrD_xf_pfwSCUN-NftYAvC9QdtHMWr2Z9FhWzTPxKLJUjNHd2qnBWo5PKr0FhwzYHL9RQ.png" width="100" style="object-fit: contain; aspect-ratio: 1/1;"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>윤대성</b></td>
+    <td align="center"><b>윤승혁</b></td>
+    <td align="center"><b>최지용</b></td>
+    <td align="center"><b>한예나</b></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/YoonDaesung-01"><img src="https://img.shields.io/badge/YoonDaesung--01-181717?style=for-the-badge&logo=github&logoColor=white"></a></td>
+    <td align="center"><a href="https://github.com/idenist"><img src="https://img.shields.io/badge/idenist-181717?style=for-the-badge&logo=github&logoColor=white"></a></td>
+    <td align="center"><a href="https://github.com/antisdream"><img src="https://img.shields.io/badge/antisdream-181717?style=for-the-badge&logo=github&logoColor=white"></a></td>
+    <td align="center"><a href="https://github.com/hanyena0830"><img src="https://img.shields.io/badge/hanyena0830-181717?style=for-the-badge&logo=github&logoColor=white"></a></td>
+  </tr>
+</table>
                                 
 
 ---
@@ -24,28 +38,31 @@
 - 필요 변수: DB_HOST="", DB_PORT="", DB_USER="", DB_PASSWORD="", DB_NAME_CARMASTER=""
 DB_NAME_VEHICLE_YEAR="", DB_NAME_FAQ="", DB_NAME_TRAFFIC=", ITS_API_KEY=""
 ---
-### 2) docker구동
-  프로젝트 폴더의 최상단 위치에서 명령어를 실행한다.
+### 2) streamlit 실행
+  프로젝트 폴더의 최상단 위치에서 다음 명령어를 실행한다.
 ```
 <bash>
-docker-compose -p SKN29-1ST-5TEAM up 
+streamlit run app.py
 ```
-- `-p SKN29-1ST-TEAM`: Docker Compose의 프로젝트 이름 지정
-- 컨테이너, 네트워크, 저장소 이름이 SKN29-1ST-5TEAM_* 형태로 생성됨
 ---
+## ERD
+<img alt="image" src="./picture/ERD.png">
+---
+
 ## 구현 화면 (Demo)
 ### 1) 메인 홈
 
-<img width="1478" height="471" alt="image" src="https://github.com/user-attachments/assets/2b6007a2-85bf-435f-b024-95fde8d4640b" />
+<img width="1478" height="471" alt="image" src="./picture/readme main background.png" />
 
 txt : 부트캠프 기수, 조 이름, 슬로건, Web 안내사항
 btn : sidebar menu(메인 홈, 등록된 자동차 통계, 연도별 등록 추이, 연도별 고속도로 통행량, 주요 지역 소요 시간, 휴게소 위치 지도, FAQ 게시판)
+
 ---
 
 ### 2) 등록된 자동차 통계
        (최근 5개월 자동차 신규 등록 통계)
 
-<img width="1908" height="847" alt="image" src="https://github.com/user-attachments/assets/310f0cf8-6304-4e58-9549-8215098c53a4" />
+<img alt="image" src="https://github.com/user-attachments/assets/310f0cf8-6304-4e58-9549-8215098c53a4" />
 
 > 1. 항목 분석
   연료별, 차종별, 성별, 연령대별, 국산/외산 비중을 확인 가능 
