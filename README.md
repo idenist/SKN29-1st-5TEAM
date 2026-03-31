@@ -61,7 +61,7 @@ streamlit run app.py
 ### 2) 등록된 자동차 통계
        (최근 5개월 자동차 신규 등록 통계)
 
-<img alt="image" src="" />
+<img alt="image" src="picture/demo2.png" />
 
 > 1. 항목 분석
   연료별, 차종별, 성별, 연령대별, 국산/외산 비중을 확인 가능 
@@ -75,7 +75,7 @@ streamlit run app.py
 ### 3) 연도별 등록 추이
        (연도별 자동차 등록 현황 (2017~2025))
 
-<img width="1911" height="836" alt="image" src="" />
+<img alt="image" src="picture/demo3.png" />
 
 
 > 1. 연도별 자동차 등록
@@ -89,7 +89,7 @@ streamlit run app.py
 ### 4) 연도별 고속도로 통행량
        (연도별 고속도로 통행량 변화)
 
-<img width="1911" height="836" alt="image" src="" />
+<img alt="image" src="picture/demo4.png" />
 
 > 2017년 ~ 2025년 교통량 변화에 관한 꺾은선 그래프
 
@@ -98,7 +98,7 @@ streamlit run app.py
 ### 5) 주요 지역 소요시간
        (주요 도시 소요시간)
 
-<img width="1911" height="836" alt="image" src="" />
+<img alt="image" src="picture/demo5.png" />
 
 
 > 서울에서 출발하는 주요 대표 노선, 서울로 도착하는 주요 대표 노선, 기타 노선에 관한 소요시간과 실시간 CCTV 정보
@@ -108,7 +108,7 @@ streamlit run app.py
 ### 6) 휴게소 위치 지도
        (노선별 휴게소 정보)
 
-<img width="1911" height="836" alt="image" src="" />
+<img alt="image" src="picture/demo6.png" />
 
 
 > 각 노선별 항목을 클릭하면 휴게소 명단이 출력되며,
@@ -119,7 +119,7 @@ streamlit run app.py
 ### 7) FAQ 게시판
        (통합 FAQ 게시판)
 
-<img width="1911" height="836" alt="image" src="" />
+<img alt="image" src="picture/demo7.png" />
 
 
 > 1. 현대자동차
