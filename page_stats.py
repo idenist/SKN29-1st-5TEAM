@@ -27,13 +27,13 @@ def show_stats():
         # ==========================================
         # Section 1: 카테고리별 비중 분석 (✨ 개편됨)
         # ==========================================
-        st.subheader("🔍 1. 최근 5개월 분석")
+        st.subheader("🔍 1. 항목별 분석")
         category_options = {
-            '연료별 비중': '연료명',
-            '차종별 비중': '차종명',
-            '성별 비중': 'sexdstn',
-            '연령대별 비중': '연령대',
-            '국산/외산 비중': 'hmmd_imp_se_nm'
+            '연료별': '연료명',
+            '차종별': '차종명',
+            '성별': 'sexdstn',
+            '연령대별': '연령대',
+            '국산/외산': 'hmmd_imp_se_nm'
         }
         
         # 차트 선택 옵션을 없애고, 기준 선택 드롭다운만 깔끔하게 배치
@@ -44,32 +44,32 @@ def show_stats():
         dynamic_summary = dynamic_summary.rename(columns={'cnt': '등록대수'})
         
         # 1. 연료별 비중: 하이브리드와 전기를 입체적으로 강조 (Pie 차트)
-        if selected_label == "연료별 비중":
+        if selected_label == "연료별":
             # 하이브리드와 전기에 해당하는 조각만 바깥으로 0.1만큼 빼냄 (pull)
             pull_values = [0.1 if val in ['하이브리드', '전기'] else 0 for val in dynamic_summary[selected_col]]
             
             fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
-                          title=f'✨ 전체 기간 {selected_label} (하이브리드·전기 강조)', hole=0.4)
+                          title=f'✨ 전체 기간 {selected_label}', hole=0.4)
             fig1.update_traces(pull=pull_values, textposition='inside', textinfo='percent+label')
             
         # 2. 차종별 비중: 승용 부분만 색을 넣고 나머지는 회색 처리 (Pie 차트)
-        elif selected_label == "차종별 비중":
+        elif selected_label == "차종별":
             color_map = {val: '#1f77b4' if val == '승용' else '#e5e5e5' for val in dynamic_summary[selected_col].unique()}
             
             fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
-                          title=f'✨ 전체 기간 {selected_label} (승용차 비중 강조)', hole=0.4,
+                          title=f'✨ 전체 기간 {selected_label}', hole=0.4,
                           color=selected_col, color_discrete_map=color_map)
             fig1.update_traces(textposition='inside', textinfo='percent+label')
             
         # 3. 성별 비중: 확연히 대비되는 색상 지정 (Pie 차트)
-        elif selected_label == "성별 비중":
+        elif selected_label == "성별":
             fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
                           title=f'✨ 전체 기간 {selected_label}', hole=0.4,
                           color_discrete_sequence=['#1f77b4', '#ef553b']) # 파랑, 빨강 대비
             fig1.update_traces(textposition='inside', textinfo='percent+label')
             
         # 4. 연령대별 비중: 깔끔한 디자인의 바 차트 
-        elif selected_label == "연령대별 비중":
+        elif selected_label == "연령대별":
             dynamic_summary = dynamic_summary.sort_values(by=selected_col) # 연령대 순 정렬
             fig1 = px.bar(
                 dynamic_summary,
@@ -96,7 +96,7 @@ def show_stats():
             fig1.update_yaxes(range=[0, dynamic_summary['등록대수'].max() * 1.15]) # 상단 여백
             
         # 5. 국산/외산 비중: 확연히 대비되는 색상 지정 (Pie 차트)
-        elif selected_label == "국산/외산 비중":
+        elif selected_label == "국산/외산":
             fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
                           title=f'✨ 전체 기간 {selected_label}', hole=0.4,
                           color_discrete_sequence=['#1f77b4', '#ff7f0e']) # 파랑, 주황 대비
@@ -108,7 +108,7 @@ def show_stats():
         # ==========================================
         # Section 2: 시간에 따른 변화 추이
         # ==========================================
-        st.subheader("📅 2. 월별 분석")
+        st.subheader("📅 2. 각 항목 월별 분석")
         trend_label = st.selectbox(
             "카테고리를 선택하세요", 
             ["전체 합계"] + list(category_options.keys())
@@ -125,7 +125,7 @@ def show_stats():
                 month_summary, 
                 x='수집년월', 
                 y='등록대수', 
-                title='월별 전체 신규 등록 대수 추이', 
+                title='각 항목 월별 신규 등록 대수 추이', 
                 markers=True,
                 text='등록대수'
             )
@@ -156,12 +156,12 @@ def show_stats():
             month_summary = month_summary.rename(columns={'cnt': '등록대수'})
 
             # 1. 연료별 비중
-            if trend_label == "연료별 비중":
-                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group')
+            if trend_label == "연료별":
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 분석', barmode='group')
                 fig2.update_layout(showlegend=True)
 
             # 2. 차종별 비중
-            elif trend_label == "차종별 비중":
+            elif trend_label == "차종별":
                 is_percentage_chart = True
                 month_summary['비율(%)'] = month_summary.groupby('수집년월')['등록대수'].transform(lambda x: x / x.sum() * 100)
                 unique_vehicles = month_summary[trend_col].unique()
@@ -169,19 +169,19 @@ def show_stats():
                 month_summary['text_label'] = month_summary['비율(%)'].apply(lambda x: f"{x:.1f}%" if x >= 5 else "")
 
                 fig2 = px.bar(month_summary, x='수집년월', y='비율(%)', color=trend_col, 
-                              title=f'월별 {trend_label} (승용차 비중 강조)', 
+                              title=f'월별 {trend_label} 분석', 
                               color_discrete_map=v_color_map, text='text_label')
                 fig2.update_traces(textposition='inside', insidetextfont=dict(color='white'), selector=dict(type='bar'))
                 fig2.update_layout(showlegend=True, barmode='stack')
 
             # 3. 성별 비중
-            elif trend_label == "성별 비중":
-                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group',
+            elif trend_label == "성별":
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 분석', barmode='group',
                               color_discrete_sequence=['#1f77b4', '#ef553b'], labels={trend_col: '성별'})
                 fig2.update_layout(showlegend=True)
 
             # 4. 연령대별 비중
-            elif trend_label == "연령대별 비중":
+            elif trend_label == "연령대별":
                 is_percentage_chart = True
                 month_summary['비율(%)'] = month_summary.groupby('수집년월')['등록대수'].transform(lambda x: x / x.sum() * 100)
                 filtered_summary = month_summary[month_summary['비율(%)'] >= 10].copy()
@@ -191,7 +191,7 @@ def show_stats():
                     x='수집년월', 
                     y='비율(%)', 
                     color=trend_col, 
-                    title=f'월별 {trend_label} (10% 이상 주요 항목)', 
+                    title=f'월별 {trend_label} 분석', 
                     text='비율(%)',
                     barmode='group' 
                 ) 
@@ -200,13 +200,13 @@ def show_stats():
                 fig2.update_layout(showlegend=True)
 
             # 5. 국산/외산 비중
-            elif trend_label == "국산/외산 비중":
-                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group',
+            elif trend_label == "국산/외산":
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 분석', barmode='group',
                               color_discrete_sequence=['#1f77b4', '#ff7f0e'], labels={trend_col: '구분'})
                 fig2.update_layout(showlegend=True)
 
             else:
-                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group')
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 분석', barmode='group')
                 fig2.update_layout(showlegend=True)
 
         # 공통 레이아웃 업데이트
