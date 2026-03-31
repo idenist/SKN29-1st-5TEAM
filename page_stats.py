@@ -43,14 +43,20 @@ def show_stats():
         dynamic_summary = df_car.groupby(selected_col)['cnt'].sum().reset_index()
         dynamic_summary = dynamic_summary.rename(columns={'cnt': '등록대수'})
         
-        # 1. 연료별 비중: 하이브리드와 전기를 입체적으로 강조 (Pie 차트)
+        # 1. 연료별 비중: 하이브리드만 톡 튀어나오게 설정 (테두리 선 제거)
         if selected_label == "연료별":
-            # 하이브리드와 전기에 해당하는 조각만 바깥으로 0.1만큼 빼냄 (pull)
-            pull_values = [0.1 if val in ['하이브리드', '전기'] else 0 for val in dynamic_summary[selected_col]]
+            # 하이브리드 조각만 0.1만큼 분리
+            pull_values = [0.1 if val == '하이브리드' else 0 for val in dynamic_summary[selected_col]]
             
             fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
                           title=f'✨ 전체 기간 {selected_label}', hole=0.4)
-            fig1.update_traces(pull=pull_values, textposition='inside', textinfo='percent+label')
+            
+            # marker 설정을 제거하여 테두리 선을 없앴습니다.
+            fig1.update_traces(
+                pull=pull_values, 
+                textposition='inside', 
+                textinfo='percent+label'
+            )
             
         # 2. 차종별 비중: 승용 부분만 색을 넣고 나머지는 회색 처리 (Pie 차트)
         elif selected_label == "차종별":
