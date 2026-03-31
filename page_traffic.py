@@ -102,7 +102,7 @@ def show_page():
                 y='traffic_Eok',
                 markers=True,
                 line_shape='spline',
-                labels={'traffic_year': '연도', 'traffic_Eok': '교통량 (단위: 억 대)'}
+                labels={'traffic_year': '연도', 'traffic_Eok': '교통량'}
             )
             
             # 스타일 및 툴팁 적용

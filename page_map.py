@@ -48,7 +48,7 @@ def load_all_rest_areas(_engine):
 def fetch_restarea_details(_engine, restarea_name):
     # 1. 음식 정보
     try:
-        df_food = pd.read_sql(f"SELECT foodNm, foodCost, bestfoodyn, etc FROM foodinfo WHERE restarea_name = '{restarea_name}'", _engine)
+        df_food = pd.read_sql(f"SELECT foodNm, foodCost, bestfoodyn, etc FROM rest_area_foods WHERE restarea_name = '{restarea_name}'", _engine)
     except: df_food = pd.DataFrame()
     
     # 2. 주유소 정보
