@@ -76,19 +76,108 @@ def show_stats():
             ["선택 안 함 (전체 합계만 보기)"] + list(category_options.keys())
         )
         
+        is_percentage_chart = False 
+
         if trend_label == "선택 안 함 (전체 합계만 보기)":
             month_summary = df_car.groupby('수집년월')['cnt'].sum().reset_index().sort_values(by='수집년월')
             month_summary = month_summary.rename(columns={'cnt': '등록대수'})
-            fig2 = px.line(month_summary, x='수집년월', y='등록대수', title='월별 전체 신규 등록 대수 추이', markers=True, text='등록대수')
-            fig2.update_traces(textposition="top center", texttemplate='%{text:,.0f}')
+            
+            # ✨ 깔끔한 디자인의 꺾은선(Line) 그래프 적용
+            fig2 = px.line(
+                month_summary, 
+                x='수집년월', 
+                y='등록대수', 
+                title='월별 전체 신규 등록 대수 추이', 
+                markers=True,
+                text='등록대수'
+            )
+            
+            fig2.update_traces(
+                textposition="top center", 
+                texttemplate='%{text:,.0f}',
+                line=dict(color='#5B8FF9', width=3.5), # 세련된 파스텔톤 블루 및 선 두께
+                marker=dict(size=8, color='#5B8FF9', line=dict(width=2, color='white')), # 마커에 흰 테두리 추가
+                cliponaxis=False # 텍스트 잘림 방지
+            )
+            
+            fig2.update_layout(
+                plot_bgcolor='white', # 깔끔한 흰색 배경
+                yaxis=dict(showgrid=True, gridcolor='#E5E7EB', zeroline=False), # 연한 회색 가로선
+                xaxis=dict(showgrid=False), # 세로선 제거
+                margin=dict(t=60), # 상단 여백 확보
+                showlegend=False
+            )
+            
+            # 차트 상하 여백을 주어 꺾은선 그래프가 답답해 보이지 않도록 동적 범위 설정
+            y_min = month_summary['등록대수'].min()
+            y_max = month_summary['등록대수'].max()
+            fig2.update_yaxes(range=[y_min * 0.85, y_max * 1.15])
+            
         else:
             trend_col = category_options[trend_label]
             month_summary = df_car.groupby(['수집년월', trend_col])['cnt'].sum().reset_index().sort_values(by='수집년월')
             month_summary = month_summary.rename(columns={'cnt': '등록대수'})
-            fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group')
 
-        fig2.update_layout(showlegend=False)
-        fig2.update_yaxes(tickformat=',.0f')
+            # 1. 연료별 비중
+            if trend_label == "연료별 비중":
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group')
+                fig2.update_layout(showlegend=True)
+
+            # 2. 차종별 비중
+            elif trend_label == "차종별 비중":
+                is_percentage_chart = True
+                month_summary['비율(%)'] = month_summary.groupby('수집년월')['등록대수'].transform(lambda x: x / x.sum() * 100)
+                unique_vehicles = month_summary[trend_col].unique()
+                v_color_map = {v: '#1f77b4' if v == '승용' else '#e5e5e5' for v in unique_vehicles}
+                month_summary['text_label'] = month_summary['비율(%)'].apply(lambda x: f"{x:.1f}%" if x >= 5 else "")
+
+                fig2 = px.bar(month_summary, x='수집년월', y='비율(%)', color=trend_col, 
+                              title=f'월별 {trend_label} (승용차 비중 강조)', 
+                              color_discrete_map=v_color_map, text='text_label')
+                fig2.update_traces(textposition='inside', insidetextfont=dict(color='white'), selector=dict(type='bar'))
+                fig2.update_layout(showlegend=True, barmode='stack')
+
+            # 3. 성별 비중
+            elif trend_label == "성별 비중":
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group',
+                              color_discrete_sequence=['#1f77b4', '#ef553b'], labels={trend_col: '성별'})
+                fig2.update_layout(showlegend=True)
+
+            # 4. 연령대별 비중
+            elif trend_label == "연령대별 비중":
+                is_percentage_chart = True
+                month_summary['비율(%)'] = month_summary.groupby('수집년월')['등록대수'].transform(lambda x: x / x.sum() * 100)
+                filtered_summary = month_summary[month_summary['비율(%)'] >= 10].copy()
+
+                fig2 = px.bar(
+                    filtered_summary, 
+                    x='수집년월', 
+                    y='비율(%)', 
+                    color=trend_col, 
+                    title=f'월별 {trend_label} (10% 이상 주요 항목)', 
+                    text='비율(%)',
+                    barmode='group' 
+                ) 
+                
+                fig2.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+                fig2.update_layout(showlegend=True)
+
+            # 5. 국산/외산 비중
+            elif trend_label == "국산/외산 비중":
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group',
+                              color_discrete_sequence=['#1f77b4', '#ff7f0e'], labels={trend_col: '구분'})
+                fig2.update_layout(showlegend=True)
+
+            else:
+                fig2 = px.bar(month_summary, x='수집년월', y='등록대수', color=trend_col, title=f'월별 {trend_label} 추이', barmode='group')
+                fig2.update_layout(showlegend=True)
+
+        # 공통 레이아웃 업데이트
+        if is_percentage_chart:
+            fig2.update_yaxes(title_text='비중 (%)', ticksuffix='%') 
+        elif trend_label != "선택 안 함 (전체 합계만 보기)": # "선택 안 함"은 위에서 y축 세팅을 따로 했으므로 제외
+            fig2.update_yaxes(tickformat=',.0f', title_text='등록대수')
+            
         fig2.update_xaxes(type='category') 
         st.plotly_chart(fig2, use_container_width=True)
 
@@ -107,79 +196,47 @@ def show_yearly_stats():
     df_yearly = load_yearly_car_data()
 
     if not df_yearly.empty:
-        # 데이터 분리 (총계 행과 개별 차종 행 분리)
         df_detail = df_yearly[df_yearly['vehicle_type'] != '총계']
-        df_total = df_yearly[df_yearly['vehicle_type'] == '총계'].copy() # SettingWithCopyWarning 방지
+        df_total = df_yearly[df_yearly['vehicle_type'] == '총계'].copy() 
         df_detail = df_detail.rename(columns={'reg_year': '연도'})
         df_detail = df_detail.rename(columns={'total_count': '등록대수'})
-        # Section 1: 연도별 등록 추이 (Line Chart)
+        
         st.subheader("📅 1. 연도별 자동차 등록 추이")
         
         trend_option = st.radio("추이 보기 방식", ["전체 합계 보기", "차종별로 나누어 보기"], horizontal=True)
         
         if trend_option == "전체 합계 보기":
-            # --- 수정된 부분: 단위 M 적용 및 디자인 개선 ---
-            # 1. M 단위로 변환 및 포맷팅된 텍스트 열 추가
             df_total['total_count_M'] = df_total['total_count'] / 1_000_000
             df_total['text_label'] = df_total['total_count_M'].apply(lambda x: f"{x:.1f}M")
 
             fig1 = px.line(
-                df_total, 
-                x='reg_year', 
-                y='total_count', 
-                markers=True, 
+                df_total, x='reg_year', y='total_count', markers=True, 
                 title='연도별 전체 누적 등록 대수',
-                labels={'reg_year': '연도', 'total_count': '등록대수'}, # 축 이름 변경
-                line_shape='spline' # 부드러운 곡선 적용
+                labels={'reg_year': '연도', 'total_count': '등록대수'}, 
+                line_shape='spline'
             )
             
-            # 선, 마커, 텍스트 위치 등 상세 스타일 조정
             fig1.update_traces(
-                textposition="top center",
-                line=dict(width=3.5), 
+                textposition="top center", line=dict(width=3.5), 
                 marker=dict(size=8, line=dict(width=2, color='white')),
-                hovertemplate="%{x}년: %{y:,.0f}대<extra></extra>" # 툴팁에는 원래 숫자(단위: 대) 표시
+                hovertemplate="%{x}년: %{y:,.0f}대<extra></extra>" 
             )
 
-            # 전체 레이아웃 테마 및 축 스타일 개선
-            fig1.update_layout(
-                template='plotly_white',
-                margin=dict(l=10, r=10, t=50, b=10)
-            )
-            
-            fig1.update_xaxes(
-                type='category',
-                showgrid=False,
-                title_font=dict(size=14, color='gray'),
-                tickfont=dict(size=12, color='dimgray')
-            )
-            
-            # 👇 여기서부터 수정된 부분입니다.
+            fig1.update_layout(template='plotly_white', margin=dict(l=10, r=10, t=50, b=10))
+            fig1.update_xaxes(type='category', showgrid=False, title_font=dict(size=14, color='gray'), tickfont=dict(size=12, color='dimgray'))
             fig1.update_yaxes(
-                showgrid=True, 
-                gridcolor='#F0F0F0',
-                zeroline=False,
-                title_font=dict(size=14, color='gray'),
-                tickfont=dict(size=12, color='dimgray'),
-                tickmode='linear',         # 눈금을 일정한 간격으로 설정
-                tick0=22000000,            # 눈금 시작 기준점 (22M)
-                dtick=1000000,             # 눈금 간격 (1M = 1,000,000)
-                range=[21500000, 27500000] # y축 표시 범위 (마커가 잘리지 않게 위아래로 약간의 여유를 줌)
+                showgrid=True, gridcolor='#F0F0F0', zeroline=False,
+                title_font=dict(size=14, color='gray'), tickfont=dict(size=12, color='dimgray'),
+                tickmode='linear', tick0=22000000, dtick=1000000, range=[21500000, 27500000] 
             )
-            # ----------------------------------------------
         else:
             fig1 = px.bar(df_detail, x='연도', y='등록대수', color='vehicle_type', title='연도별 차종별 누적 등록 대수')
-            # fig1.update_traces(
-            #     texttemplate='%{text:,.0f}',
-            #     textposition='outside'
-            # )
             fig1.update_xaxes(type='category')
             
         st.plotly_chart(fig1, use_container_width=True)
 
         st.markdown("---")
 
-        # Section 2: 특정 연도의 용도별/차종별 비중 분석
         st.subheader("🔍 2. 연도별 상세 비중 분석")
         
         year_list = sorted(df_detail['연도'].unique(), reverse=True)

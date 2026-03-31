@@ -1,17 +1,15 @@
 import streamlit as st
 
-# 🌟 분리해 둔 화면 함수들을 불러옵니다!
 from page_faq import show_faq
-from page_stats import show_stats, show_yearly_stats  # 👈 show_yearly_stats 추가!
+from page_stats import show_stats, show_yearly_stats 
 from page_traffic import show_page
-import page_map  # 새로 만든 지도 페이지 모듈
-import page_traffic_time # 👈 새로 만든 실시간 소요시간 페이지 모듈 임포트!
+import page_map  
+import page_traffic_time 
 from sidebar import sidebar
 
-# 페이지 기본 설정
+
 st.set_page_config(page_title="HI-REST", page_icon="🛣️", layout="wide")
 
-# 👈 메뉴에 '연도별 등록 추이'를 추가했습니다.
 menu = sidebar()
 
 if menu == "메인 홈":
