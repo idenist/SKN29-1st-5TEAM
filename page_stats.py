@@ -9,7 +9,7 @@ from utils import load_car_data, load_yearly_car_data
 # ==========================================
 def show_stats():
     st.title("🚘 최근 5개월 자동차 신규 등록 통계")
-    st.write("궁금한 조건을 직접 선택해서 나만의 맞춤형 통계를 확인해 보세요!")
+    st.write("2025년 10월 ~ 2026년 2월 자동차 신규 등록 통계")
     st.markdown("---")
 
     df_car = load_car_data()
@@ -24,8 +24,10 @@ def show_stats():
         df_car['수집년월'] = df_car['regist_yy'] + "-" + df_car['regist_mt']
         df_car['연령대'] = df_car['agrde'] + "0대" 
 
-        # Section 1: 카테고리별 비중 분석
-        st.subheader("🔍 1. 카테고리별 비중 분석")
+        # ==========================================
+        # Section 1: 카테고리별 비중 분석 (✨ 개편됨)
+        # ==========================================
+        st.subheader("🔍 1. 최근 5개월 분석")
         category_options = {
             '연료별 비중': '연료명',
             '차종별 비중': '차종명',
@@ -34,55 +36,91 @@ def show_stats():
             '국산/외산 비중': 'hmmd_imp_se_nm'
         }
         
-        col1, col2 = st.columns(2)
-        with col1:
-            selected_label = st.selectbox("어떤 기준의 통계를 보고 싶으신가요?", list(category_options.keys()))
-            selected_col = category_options[selected_label] 
+        # 차트 선택 옵션을 없애고, 기준 선택 드롭다운만 깔끔하게 배치
+        selected_label = st.selectbox("기준을 선택해주세요", list(category_options.keys()))
+        selected_col = category_options[selected_label] 
             
-        with col2:
-            chart_type = st.radio("차트 형태", ["파이 차트 🍩", "바 차트 📊"], horizontal=True)
-
         dynamic_summary = df_car.groupby(selected_col)['cnt'].sum().reset_index()
         dynamic_summary = dynamic_summary.rename(columns={'cnt': '등록대수'})
         
-        if chart_type == "파이 차트 🍩":
-            fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, title=f'✨ 전체 기간 {selected_label}', hole=0.4)
-        else:
-            dynamic_summary = dynamic_summary.sort_values(by='등록대수', ascending=False)
+        # 1. 연료별 비중: 하이브리드와 전기를 입체적으로 강조 (Pie 차트)
+        if selected_label == "연료별 비중":
+            # 하이브리드와 전기에 해당하는 조각만 바깥으로 0.1만큼 빼냄 (pull)
+            pull_values = [0.1 if val in ['하이브리드', '전기'] else 0 for val in dynamic_summary[selected_col]]
+            
+            fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
+                          title=f'✨ 전체 기간 {selected_label} (하이브리드·전기 강조)', hole=0.4)
+            fig1.update_traces(pull=pull_values, textposition='inside', textinfo='percent+label')
+            
+        # 2. 차종별 비중: 승용 부분만 색을 넣고 나머지는 회색 처리 (Pie 차트)
+        elif selected_label == "차종별 비중":
+            color_map = {val: '#1f77b4' if val == '승용' else '#e5e5e5' for val in dynamic_summary[selected_col].unique()}
+            
+            fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
+                          title=f'✨ 전체 기간 {selected_label} (승용차 비중 강조)', hole=0.4,
+                          color=selected_col, color_discrete_map=color_map)
+            fig1.update_traces(textposition='inside', textinfo='percent+label')
+            
+        # 3. 성별 비중: 확연히 대비되는 색상 지정 (Pie 차트)
+        elif selected_label == "성별 비중":
+            fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
+                          title=f'✨ 전체 기간 {selected_label}', hole=0.4,
+                          color_discrete_sequence=['#1f77b4', '#ef553b']) # 파랑, 빨강 대비
+            fig1.update_traces(textposition='inside', textinfo='percent+label')
+            
+        # 4. 연령대별 비중: 깔끔한 디자인의 바 차트 
+        elif selected_label == "연령대별 비중":
+            dynamic_summary = dynamic_summary.sort_values(by=selected_col) # 연령대 순 정렬
             fig1 = px.bar(
                 dynamic_summary,
                 x=selected_col,
                 y='등록대수',
                 title=f'✨ 전체 기간 {selected_label}',
-                text='등록대수',
-                color=selected_col
+                text='등록대수'
             )
-
             fig1.update_traces(
-                texttemplate='%{text:,.0f}',
-                textposition='outside'
+                texttemplate='%{text:,.0f}', 
+                textposition="outside",
+                marker_color='#5B8FF9', # 세련된 블루
+                opacity=0.9,
+                width=0.55, # 막대 두께 살짝 얇게
+                cliponaxis=False
             )
-
-            fig1.update_layout(showlegend=False)
-            fig1.update_yaxes(tickformat=',.0f')
+            fig1.update_layout(
+                plot_bgcolor='white', 
+                yaxis=dict(showgrid=True, gridcolor='#E5E7EB', zeroline=False, tickformat=',.0f'), 
+                xaxis=dict(showgrid=False), 
+                margin=dict(t=60), 
+                showlegend=False
+            )
+            fig1.update_yaxes(range=[0, dynamic_summary['등록대수'].max() * 1.15]) # 상단 여백
+            
+        # 5. 국산/외산 비중: 확연히 대비되는 색상 지정 (Pie 차트)
+        elif selected_label == "국산/외산 비중":
+            fig1 = px.pie(dynamic_summary, values='등록대수', names=selected_col, 
+                          title=f'✨ 전체 기간 {selected_label}', hole=0.4,
+                          color_discrete_sequence=['#1f77b4', '#ff7f0e']) # 파랑, 주황 대비
+            fig1.update_traces(textposition='inside', textinfo='percent+label')
             
         st.plotly_chart(fig1, use_container_width=True)
         st.markdown("---")
 
+        # ==========================================
         # Section 2: 시간에 따른 변화 추이
-        st.subheader("📅 2. 시간에 따른 변화 추이")
+        # ==========================================
+        st.subheader("📅 2. 월별 분석")
         trend_label = st.selectbox(
-            "추이를 세부적으로 나눠서 볼 기준을 선택하세요", 
-            ["선택 안 함 (전체 합계만 보기)"] + list(category_options.keys())
+            "카테고리를 선택하세요", 
+            ["전체 합계"] + list(category_options.keys())
         )
         
         is_percentage_chart = False 
 
-        if trend_label == "선택 안 함 (전체 합계만 보기)":
+        if trend_label == "전체 합계":
             month_summary = df_car.groupby('수집년월')['cnt'].sum().reset_index().sort_values(by='수집년월')
             month_summary = month_summary.rename(columns={'cnt': '등록대수'})
             
-            # ✨ 깔끔한 디자인의 꺾은선(Line) 그래프 적용
+            # 깔끔한 디자인의 꺾은선(Line) 그래프
             fig2 = px.line(
                 month_summary, 
                 x='수집년월', 
@@ -95,20 +133,19 @@ def show_stats():
             fig2.update_traces(
                 textposition="top center", 
                 texttemplate='%{text:,.0f}',
-                line=dict(color='#5B8FF9', width=3.5), # 세련된 파스텔톤 블루 및 선 두께
-                marker=dict(size=8, color='#5B8FF9', line=dict(width=2, color='white')), # 마커에 흰 테두리 추가
-                cliponaxis=False # 텍스트 잘림 방지
+                line=dict(color='#5B8FF9', width=3.5), 
+                marker=dict(size=8, color='#5B8FF9', line=dict(width=2, color='white')), 
+                cliponaxis=False 
             )
             
             fig2.update_layout(
-                plot_bgcolor='white', # 깔끔한 흰색 배경
-                yaxis=dict(showgrid=True, gridcolor='#E5E7EB', zeroline=False), # 연한 회색 가로선
-                xaxis=dict(showgrid=False), # 세로선 제거
-                margin=dict(t=60), # 상단 여백 확보
+                plot_bgcolor='white', 
+                yaxis=dict(showgrid=True, gridcolor='#E5E7EB', zeroline=False), 
+                xaxis=dict(showgrid=False), 
+                margin=dict(t=60), 
                 showlegend=False
             )
             
-            # 차트 상하 여백을 주어 꺾은선 그래프가 답답해 보이지 않도록 동적 범위 설정
             y_min = month_summary['등록대수'].min()
             y_max = month_summary['등록대수'].max()
             fig2.update_yaxes(range=[y_min * 0.85, y_max * 1.15])
@@ -175,7 +212,7 @@ def show_stats():
         # 공통 레이아웃 업데이트
         if is_percentage_chart:
             fig2.update_yaxes(title_text='비중 (%)', ticksuffix='%') 
-        elif trend_label != "선택 안 함 (전체 합계만 보기)": # "선택 안 함"은 위에서 y축 세팅을 따로 했으므로 제외
+        elif trend_label != "선택 안 함 (전체 합계만 보기)": 
             fig2.update_yaxes(tickformat=',.0f', title_text='등록대수')
             
         fig2.update_xaxes(type='category') 
