@@ -1,0 +1,9 @@
+mysql==0.0.3
+mysql-connector-python==9.6.0
+pandas==2.3.3
+plotly==6.6.0
+PyMySQL==1.1.2
+requests==2.32.5
+SQLAlchemy==2.0.48
+streamlit==1.55.0
+streamlit-option-menu==0.4.0
