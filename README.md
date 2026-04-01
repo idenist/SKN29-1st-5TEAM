@@ -330,6 +330,7 @@ TABLE FAQ (
 
 ## 7. GitHub 폴더 구조
 
+```bash
 PROJECT_1/
 
 ├── Crawling/                  # 크롤링 및 데이터 수집 관련 폴더
@@ -379,5 +380,6 @@ PROJECT_1/
 ├── sidebar.py                 # 사이드바 메뉴 구성 모듈
 
 └── utils.py                   # 공통 유틸리티 함수 모듈
+```
 
 ---
