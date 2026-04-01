@@ -152,7 +152,8 @@ def show_yearly_stats():
         trend_option = st.radio("추이 보기 방식", ["전체 합계 보기", "차종 비율 보기"], horizontal=True)
         
         if trend_option == "전체 합계 보기":
-            fig_y = px.line(df_total, x='reg_year', y='total_count', markers=True, title='연도별 전체 누적 등록 대수')
+            fig_y = px.line(df_total, x='reg_year', y='total_count', markers=True, title='연도별 전체 누적 등록 대수', 
+                            labels={'reg_year': '연도', 'total_count': '등록대수'}) # 축 이름 변경
             fig_y.update_yaxes(range=[21500000, 27500000])
         else:
             df_detail_sorted = df_detail.sort_values(by=['연도', '등록대수'], ascending=[True, False])
