@@ -369,10 +369,14 @@ TABLE FAQ (
 <<<<<<< HEAD
 ## 7. GitHub 폴더 구조
 
+<<<<<<< HEAD
 =======
 ## 12. GitHub 폴더 구조
 ```
 >>>>>>> 3a318935f476b65ebd8aec996ed78abfb12b7d2f
+=======
+```bash
+>>>>>>> 92fea50a9ff9ac0c22364bb35f6c8a6d0e03a306
 PROJECT_1/
 
 ├── Crawling/                  # 크롤링 및 데이터 수집 관련 폴더
@@ -422,6 +426,7 @@ PROJECT_1/
 ├── sidebar.py                 # 사이드바 메뉴 구성 모듈
 
 └── utils.py                   # 공통 유틸리티 함수 모듈
+```
 
 ---
 <<<<<<< HEAD

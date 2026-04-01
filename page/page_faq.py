@@ -2,7 +2,7 @@ import streamlit as st
 from utils import load_data, render_pagination
 
 def show_faq():
-    st.title("❓ 통합 FAQ 게시판")
+    st.title("통합 FAQ 게시판")
     st.write("궁금한 브랜드의 탭을 선택하고 카테고리 버튼을 클릭해 주세요.")
     
     tab_hyundai, tab_kia, tab_hipass = st.tabs(["🚙 현대자동차", "🚗 기아자동차", "💳 하이패스"])
